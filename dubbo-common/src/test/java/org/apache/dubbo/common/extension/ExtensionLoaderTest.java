@@ -57,30 +57,56 @@ import org.apache.dubbo.common.extension.ext9_empty.impl.Ext9EmptyImpl;
 import org.apache.dubbo.common.extension.injection.InjectExt;
 import org.apache.dubbo.common.extension.injection.impl.InjectExtImpl;
 import org.apache.dubbo.common.lang.Prioritized;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.IntConsumer;
+import java.util.stream.Stream;
 
+import static java.util.ServiceLoader.load;
+import static java.util.stream.StreamSupport.stream;
 import static org.apache.dubbo.common.constants.CommonConstants.GROUP_KEY;
 import static org.apache.dubbo.common.extension.ExtensionLoader.getExtensionLoader;
 import static org.apache.dubbo.common.extension.ExtensionLoader.getLoadingStrategies;
-import static org.hamcrest.CoreMatchers.allOf;
-import static org.hamcrest.CoreMatchers.anyOf;
-import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ExtensionLoaderTest {
+
+    @Test
+    public void test_ServiceLoader() {
+////
+//        ServicesCatalog catalog = ServicesCatalog.getServicesCatalogOrNull(Thread.currentThread().getContextClassLoader());
+//        List<ServicesCatalog.ServiceProvider> providers;
+//
+//        providers = catalog.findServices("org.apache.dubbo.common.extension.DubboLoadingStrategy");
+//
+//        System.out.println(providers);
+    }
+
+    @Test
+    public void test_ServiceLoader1() {
+//        ServiceLoader<LoadingStrategy> load = ServiceLoader.load(LoadingStrategy.class);
+        Spliterator<LoadingStrategy> spliterator = load(LoadingStrategy.class).spliterator();
+
+        Stream<LoadingStrategy> stream = stream(spliterator, false);
+
+//        stream = stream.sorted();
+        IntConsumer aNew = LoadingStrategy[]::new;
+
+        LoadingStrategy[] loadingStrategies = stream.toArray(LoadingStrategy[]::new);
+        System.out.println(loadingStrategies);
+
+    }
+
+    @Test
+    public void test_loadExtensionClasses() {
+        getExtensionLoader(SimpleExt.class).loadExtensionClasses();
+    }
+
     @Test
     public void test_getExtensionLoader_Null() throws Exception {
         try {

@@ -108,6 +108,8 @@ public class ExtensionLoader<T> {
 
     private Map<String, IllegalStateException> exceptions = new ConcurrentHashMap<>();
 
+    // 这里获取三种策略，就是三个文件夹。
+    // 通过Java原生的SPI机制加载LoadingStrategy， 详情见 META-INF/services/org.apache.dubbo.common.extension.LoadingStrategy
     private static volatile LoadingStrategy[] strategies = loadLoadingStrategies();
 
     public static void setLoadingStrategies(LoadingStrategy... strategies) {
@@ -420,7 +422,7 @@ public class ExtensionLoader<T> {
         if ("true".equals(name)) {
             return getDefaultExtension();
         }
-        final Holder<Object> holder = getOrCreateHolder(name);
+        final Holder<Object> holder = getOrCreateHolder(name); // 这里只是创建一个Holder
         Object instance = holder.get();
         if (instance == null) {
             synchronized (holder) {
@@ -768,12 +770,12 @@ public class ExtensionLoader<T> {
     /**
      * synchronized in getExtensionClasses
      */
-    private Map<String, Class<?>> loadExtensionClasses() {
+    public Map<String, Class<?>> loadExtensionClasses() {
         cacheDefaultExtensionName();
 
         Map<String, Class<?>> extensionClasses = new HashMap<>();
 
-        for (LoadingStrategy strategy : strategies) {
+        for (LoadingStrategy strategy : strategies) { // 三种策略， 分别代表了3个目录。
             loadDirectory(extensionClasses, strategy.directory(), type.getName(), strategy.preferExtensionClassLoader(), strategy.overridden(), strategy.excludedPackages());
             loadDirectory(extensionClasses, strategy.directory(), type.getName().replace("org.apache", "com.alibaba"), strategy.preferExtensionClassLoader(), strategy.overridden(), strategy.excludedPackages());
         }

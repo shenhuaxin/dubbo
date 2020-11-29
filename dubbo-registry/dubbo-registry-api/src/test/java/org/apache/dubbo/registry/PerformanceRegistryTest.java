@@ -43,7 +43,9 @@ public class PerformanceRegistryTest  {
         final int concurrent = PerformanceUtils.getIntProperty("concurrent", 100);
         int r = PerformanceUtils.getIntProperty("runs", 1000);
         final int runs = r > 0 ? r : Integer.MAX_VALUE;
-        final Registry registry = ExtensionLoader.getExtensionLoader(RegistryFactory.class).getAdaptiveExtension().getRegistry(URL.valueOf("remote://admin:hello1234@" + PerformanceUtils.getProperty("server", "10.20.153.28:9090")));
+        ExtensionLoader<RegistryFactory> extensionLoader = ExtensionLoader.getExtensionLoader(RegistryFactory.class);
+        RegistryFactory adaptiveExtension = extensionLoader.getAdaptiveExtension();
+        final Registry registry = adaptiveExtension.getRegistry(URL.valueOf("simple://admin:hello1234@" + PerformanceUtils.getProperty("server", "10.20.153.28:9090")));
         for (int i = 0; i < concurrent; i++) {
             final int t = i;
             new Thread(new Runnable() {
