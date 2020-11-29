@@ -34,6 +34,7 @@ public class PerformanceRegistryTest  {
 
     @Test
     public void testRegistry() {
+        // TODO 2020-11-30
         // read server info from property
         if (PerformanceUtils.getProperty("server", null) == null) {
             logger.warn("Please set -Dserver=127.0.0.1:9090");

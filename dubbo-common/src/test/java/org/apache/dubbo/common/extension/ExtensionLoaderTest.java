@@ -99,7 +99,6 @@ public class ExtensionLoaderTest {
 
         LoadingStrategy[] loadingStrategies = stream.toArray(LoadingStrategy[]::new);
         System.out.println(loadingStrategies);
-
     }
 
     @Test
