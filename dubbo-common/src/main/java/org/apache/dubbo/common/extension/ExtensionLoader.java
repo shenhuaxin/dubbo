@@ -776,6 +776,7 @@ public class ExtensionLoader<T> {
         Map<String, Class<?>> extensionClasses = new HashMap<>();
 
         for (LoadingStrategy strategy : strategies) { // 三种策略， 分别代表了3个目录。
+            // 将3个目录的所有SPI
             loadDirectory(extensionClasses, strategy.directory(), type.getName(), strategy.preferExtensionClassLoader(), strategy.overridden(), strategy.excludedPackages());
             loadDirectory(extensionClasses, strategy.directory(), type.getName().replace("org.apache", "com.alibaba"), strategy.preferExtensionClassLoader(), strategy.overridden(), strategy.excludedPackages());
         }
@@ -811,7 +812,7 @@ public class ExtensionLoader<T> {
 
     private void loadDirectory(Map<String, Class<?>> extensionClasses, String dir, String type,
                                boolean extensionLoaderClassLoaderFirst, boolean overridden, String... excludedPackages) {
-        String fileName = dir + type;
+        String fileName = dir + type; // 在加载Compiler接口之前，打印了RegisterFactory的代码
         try {
             Enumeration<java.net.URL> urls = null;
             ClassLoader classLoader = findClassLoader();
@@ -1029,14 +1030,16 @@ public class ExtensionLoader<T> {
         if (cachedAdaptiveClass != null) {
             return cachedAdaptiveClass;
         }
-        return cachedAdaptiveClass = createAdaptiveExtensionClass();
+        return cachedAdaptiveClass = createAdaptiveExtensionClass(); // 使用javaassist生成泛型中接口对应的实现类。
     }
 
     private Class<?> createAdaptiveExtensionClass() {
+        // 这里只是对应的实现类的代码， 还没有进行编译
         String code = new AdaptiveClassCodeGenerator(type, cachedDefaultName).generate();
         ClassLoader classLoader = findClassLoader();
+        // Compiler的实现有三种
         org.apache.dubbo.common.compiler.Compiler compiler = ExtensionLoader.getExtensionLoader(org.apache.dubbo.common.compiler.Compiler.class).getAdaptiveExtension();
-        return compiler.compile(code, classLoader);
+        return compiler.compile(code, classLoader); // 编译成class文件。
     }
 
     @Override
