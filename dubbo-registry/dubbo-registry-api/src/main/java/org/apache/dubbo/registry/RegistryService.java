@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  * RegistryService. (SPI, Prototype, ThreadSafe)
- *
+ * 注册服务（连接注册中心的工具，向注册中心注册数据）
  * @see org.apache.dubbo.registry.Registry
  * @see org.apache.dubbo.registry.RegistryFactory#getRegistry(URL)
  */
@@ -30,13 +30,19 @@ public interface RegistryService {
 
     /**
      * Register data, such as : provider service, consumer address, route rule, override rule and other data.
+     * 注册数据, 例如：提供者服务、消费者地址、路由规则等。
      * <p>
      * Registering is required to support the contract:<br>
      * 1. When the URL sets the check=false parameter. When the registration fails, the exception is not thrown and retried in the background. Otherwise, the exception will be thrown.<br>
+     *     当URL中设置了 check = false, 注册失败的时候不会抛出异常并且在后台重试， 否则将抛出异常。
      * 2. When URL sets the dynamic=false parameter, it needs to be stored persistently, otherwise, it should be deleted automatically when the registrant has an abnormal exit.<br>
+     *     当URL中设置了 dynamic = false，他就会被持久化保存，否则，当登记者异常退出后会被自动删除。 （搜索dubbo 静态服务，获取更多内容）
      * 3. When the URL sets category=routers, it means classified storage, the default category is providers, and the data can be notified by the classified section. <br>
+     *     当URL中设置了 category = routers, 这意味着分类存储，默认的类别是提供者，并且可以通过分类部分通知数据。
      * 4. When the registry is restarted, network jitter, data can not be lost, including automatically deleting data from the broken line.<br>
+     *     当注册中心被重启、网络抖动、数据不会丢失，包括从虚线自动删除的数据（啥意思？？）
      * 5. Allow URLs which have the same URL but different parameters to coexist,they can't cover each other.<br>
+     *     允许不同参数、相同地址的URL共存，他们不会互相覆盖。
      *
      * @param url  Registration information , is not allowed to be empty, e.g: dubbo://10.20.153.10/org.apache.dubbo.foo.BarService?version=1.0.0&application=kylin
      */

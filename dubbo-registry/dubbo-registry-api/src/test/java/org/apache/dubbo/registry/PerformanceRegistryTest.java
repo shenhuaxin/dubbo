@@ -46,16 +46,18 @@ public class PerformanceRegistryTest  {
         ExtensionLoader<RegistryFactory> extensionLoader = ExtensionLoader.getExtensionLoader(RegistryFactory.class);
         RegistryFactory adaptiveExtension = extensionLoader.getAdaptiveExtension();
         final Registry registry = adaptiveExtension.getRegistry(URL.valueOf("simple://admin:hello1234@" + PerformanceUtils.getProperty("server", "10.20.153.28:9090")));
-        for (int i = 0; i < concurrent; i++) {
-            final int t = i;
-            new Thread(new Runnable() {
-                public void run() {
-                    for (int j = 0; j < runs; j++) {
-                        registry.register(URL.valueOf("remote://" + NetUtils.getLocalHost() + ":8080/demoService" + t + "_" + j + "?version=1.0.0&application=demo&dubbo=2.0&interface=" + "org.apache.dubbo.demo.DemoService" + (base + t) + "_" + (base + j)));
-                    }
-                }
-            }).start();
-        }
+
+        //        for (int i = 0; i < concurrent; i++) {
+//            final int t = i;
+//            new Thread(new Runnable() {
+//                public void run() {
+//                    for (int j = 0; j < runs; j++) {
+//                        registry.register(URL.valueOf("remote://" + NetUtils.getLocalHost() + ":8080/demoService" + t + "_" + j + "?version=1.0.0&application=demo&dubbo=2.0&interface=" + "org.apache.dubbo.demo.DemoService" + (base + t) + "_" + (base + j)));
+        registry.register(URL.valueOf("remote://" + NetUtils.getLocalHost() + ":8080/demoService" + 0 + "_" + 0 + "?version=1.0.0&application=demo&dubbo=2.0&interface=" + "org.apache.dubbo.demo.DemoService" + (base + 0) + "_" + (base + 0)));
+//                    }
+//                }
+//            }).start();
+//        }
         synchronized (PerformanceRegistryTest.class) {
             while (true) {
                 try {

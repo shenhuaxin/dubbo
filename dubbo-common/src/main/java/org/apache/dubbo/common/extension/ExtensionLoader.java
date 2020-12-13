@@ -94,7 +94,7 @@ public class ExtensionLoader<T> {
 
     private final ExtensionFactory objectFactory;
 
-    private final ConcurrentMap<Class<?>, String> cachedNames = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Class<?>, String> cachedNames = new ConcurrentHashMap<>();  // 缓存实现类的名称
 
     private final Holder<Map<String, Class<?>>> cachedClasses = new Holder<>();
 
@@ -102,7 +102,7 @@ public class ExtensionLoader<T> {
     private final ConcurrentMap<String, Holder<Object>> cachedInstances = new ConcurrentHashMap<>();
     private final Holder<Object> cachedAdaptiveInstance = new Holder<>();
     private volatile Class<?> cachedAdaptiveClass = null;
-    private String cachedDefaultName;
+    private String cachedDefaultName;   // 多个实现类， 选择这个默认实现类，一般为SPI的值
     private volatile Throwable createAdaptiveInstanceError;
 
     private Set<Class<?>> cachedWrapperClasses;
@@ -803,7 +803,7 @@ public class ExtensionLoader<T> {
                         + ": " + Arrays.toString(names));
             }
             if (names.length == 1) {
-                cachedDefaultName = names[0];
+                cachedDefaultName = names[0];  // 当没有指定实现类，默认为SPI的值
             }
         }
     }
@@ -900,7 +900,7 @@ public class ExtensionLoader<T> {
                     type + ", class line: " + clazz.getName() + "), class "
                     + clazz.getName() + " is not subtype of interface.");
         }
-        if (clazz.isAnnotationPresent(Adaptive.class)) {
+        if (clazz.isAnnotationPresent(Adaptive.class)) {   //实现了AnnotatedElement接口的元素都是可以被注解修饰，isAnnotationPresent表示该元素是否被某个注解修饰。
             cacheAdaptiveClass(clazz, overridden);
         } else if (isWrapperClass(clazz)) {
             cacheWrapperClass(clazz);
@@ -915,7 +915,7 @@ public class ExtensionLoader<T> {
 
             String[] names = NAME_SEPARATOR.split(name);
             if (ArrayUtils.isNotEmpty(names)) {
-                cacheActivateClass(clazz, names[0]);
+                cacheActivateClass(clazz, names[0]); // tmp: 缓存被Active标注了的类。
                 for (String n : names) {
                     cacheName(clazz, n);
                     saveInExtensionClass(extensionClasses, clazz, n, overridden);
@@ -934,7 +934,7 @@ public class ExtensionLoader<T> {
     }
 
     /**
-     * put clazz in extensionClasses
+     * put clazz in extensionClasses ： 将真正的实现类放入extensionClasses中
      */
     private void saveInExtensionClass(Map<String, Class<?>> extensionClasses, Class<?> clazz, String name, boolean overridden) {
         Class<?> c = extensionClasses.get(name);
@@ -1029,7 +1029,7 @@ public class ExtensionLoader<T> {
 
     private Class<?> getAdaptiveExtensionClass() {
         getExtensionClasses();
-        if (cachedAdaptiveClass != null) {
+        if (cachedAdaptiveClass != null) {  // 如果SPI标注的接口, SPI文件中有被Adptive注解标注的实现类， 则默认返回该类。 如Compiler类， 默认返回AdptiveCompiler.
             return cachedAdaptiveClass;
         }
         return cachedAdaptiveClass = createAdaptiveExtensionClass(); // 使用javaassist生成泛型中接口对应的实现类。
@@ -1039,7 +1039,7 @@ public class ExtensionLoader<T> {
         // 这里只是对应的实现类的代码， 还没有进行编译
         String code = new AdaptiveClassCodeGenerator(type, cachedDefaultName).generate();
         ClassLoader classLoader = findClassLoader();
-        // Compiler的实现有三种
+        // Compiler的实现有三种, 现在这里还是AdaptiveCompiler
         org.apache.dubbo.common.compiler.Compiler compiler = ExtensionLoader.getExtensionLoader(org.apache.dubbo.common.compiler.Compiler.class).getAdaptiveExtension();
         return compiler.compile(code, classLoader); // 编译成class文件。
     }
