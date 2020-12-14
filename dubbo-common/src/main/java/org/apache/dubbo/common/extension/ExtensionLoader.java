@@ -92,7 +92,7 @@ public class ExtensionLoader<T> {
 
     private final Class<?> type;
 
-    private final ExtensionFactory objectFactory;
+    private final ExtensionFactory objectFactory;   // 扩展工厂（貌似是用来做依赖注入的）
 
     private final ConcurrentMap<Class<?>, String> cachedNames = new ConcurrentHashMap<>();  // 缓存实现类的名称
 
@@ -100,7 +100,7 @@ public class ExtensionLoader<T> {
 
     private final Map<String, Object> cachedActivates = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Holder<Object>> cachedInstances = new ConcurrentHashMap<>();
-    private final Holder<Object> cachedAdaptiveInstance = new Holder<>();
+    private final Holder<Object> cachedAdaptiveInstance = new Holder<>();                // 使用Holder类包装的好处： 主要：Holder类中的value使用了volatile修饰，避免线程不安全。 次要： 无需担心因值传递而导致引用指向新对象无效的情况
     private volatile Class<?> cachedAdaptiveClass = null;
     private String cachedDefaultName;   // 多个实现类， 选择这个默认实现类，一般为SPI的值
     private volatile Throwable createAdaptiveInstanceError;
@@ -157,17 +157,17 @@ public class ExtensionLoader<T> {
         if (type == null) {
             throw new IllegalArgumentException("Extension type == null");
         }
-        if (!type.isInterface()) {
+        if (!type.isInterface()) {   // 是否为接口
             throw new IllegalArgumentException("Extension type (" + type + ") is not an interface!");
         }
-        if (!withExtensionAnnotation(type)) {
+        if (!withExtensionAnnotation(type)) {    // 接口上是否有SPI注解
             throw new IllegalArgumentException("Extension type (" + type +
                     ") is not an extension, because it is NOT annotated with @" + SPI.class.getSimpleName() + "!");
         }
 
         ExtensionLoader<T> loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);
         if (loader == null) {
-            // 每个extensionLoader对象都有对应的Type. 保存这个type对应的信息。
+            // // 没有的话，新建一个这个类型的ExtensionLoader, 放入缓存
             EXTENSION_LOADERS.putIfAbsent(type, new ExtensionLoader<T>(type));
             loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);
         }
@@ -585,7 +585,7 @@ public class ExtensionLoader<T> {
                         createAdaptiveInstanceError);
             }
 
-            synchronized (cachedAdaptiveInstance) {
+            synchronized (cachedAdaptiveInstance) {   // 双重检查锁
                 instance = cachedAdaptiveInstance.get();
                 if (instance == null) {
                     try {

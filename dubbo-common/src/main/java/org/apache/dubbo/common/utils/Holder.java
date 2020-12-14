@@ -21,7 +21,7 @@ package org.apache.dubbo.common.utils;
  */
 public class Holder<T> {
 
-    private volatile T value;
+    private volatile T value;   // 使用volatile避免多线程安全问题。
 
     public void set(T value) {
         this.value = value;
