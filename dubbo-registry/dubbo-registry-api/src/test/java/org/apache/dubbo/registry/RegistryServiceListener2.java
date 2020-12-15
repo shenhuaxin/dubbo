@@ -26,6 +26,7 @@ public class RegistryServiceListener2 implements RegistryServiceListener {
 
     @Override
     public void onRegister(URL url) {
+        System.out.println("2： 注册成功");
         delegate.onRegister(url);
     }
 

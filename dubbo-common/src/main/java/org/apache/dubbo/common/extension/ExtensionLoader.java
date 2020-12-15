@@ -105,7 +105,7 @@ public class ExtensionLoader<T> {
     private String cachedDefaultName;   // 多个实现类， 选择这个默认实现类，一般为SPI的值
     private volatile Throwable createAdaptiveInstanceError;
 
-    private Set<Class<?>> cachedWrapperClasses;
+    private Set<Class<?>> cachedWrapperClasses;    // 缓存需要包装的类
 
     private Map<String, IllegalStateException> exceptions = new ConcurrentHashMap<>();
 
@@ -656,7 +656,7 @@ public class ExtensionLoader<T> {
                         Wrapper wrapper = wrapperClass.getAnnotation(Wrapper.class);
                         if (wrapper == null
                                 || (ArrayUtils.contains(wrapper.matches(), name) && !ArrayUtils.contains(wrapper.mismatches(), name))) {
-                            instance = injectExtension((T) wrapperClass.getConstructor(type).newInstance(instance));
+                            instance = injectExtension((T) wrapperClass.getConstructor(type).newInstance(instance));   // 获取构造函数，将实际工作的类传递进去，生成包装类对象。 注入依赖。
                         }
                     }
                 }
@@ -903,7 +903,7 @@ public class ExtensionLoader<T> {
         if (clazz.isAnnotationPresent(Adaptive.class)) {   //实现了AnnotatedElement接口的元素都是可以被注解修饰，isAnnotationPresent表示该元素是否被某个注解修饰。
             cacheAdaptiveClass(clazz, overridden);
         } else if (isWrapperClass(clazz)) {
-            cacheWrapperClass(clazz);
+            cacheWrapperClass(clazz);     // 缓存wrapper类
         } else {
             clazz.getConstructor();
             if (StringUtils.isEmpty(name)) {
@@ -994,6 +994,8 @@ public class ExtensionLoader<T> {
      * test if clazz is a wrapper class
      * <p>
      * which has Constructor with given class type as its only argument
+     * 如果类中有一个type的构造函数， 那么这个类就是type的wrapper类：
+     * 如：META-INF/dubbo/internal/org.apache.dubbo.registry.RegistryFactory中的 wrapper=org.apache.dubbo.registry.RegistryFactoryWrapper
      */
     private boolean isWrapperClass(Class<?> clazz) {
         try {

@@ -31,6 +31,7 @@ public class RegistryFactoryWrapper implements RegistryFactory {
 
     @Override
     public Registry getRegistry(URL url) {
+        // 创建一个 包含RegistryServiceListener和Register 的包装类。 如本module下的META-INF/dubbo/org.apache.dubbo.registry.RegistryServiceListener
         return new ListenerRegistryWrapper(registryFactory.getRegistry(url),
                 Collections.unmodifiableList(ExtensionLoader.getExtensionLoader(RegistryServiceListener.class)
                         .getActivateExtension(url, "registry.listeners")));
