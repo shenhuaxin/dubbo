@@ -53,14 +53,16 @@ public interface RegistryService {
      * <p>
      * Unregistering is required to support the contract:<br>
      * 1. If it is the persistent stored data of dynamic=false, the registration data can not be found, then the IllegalStateException is thrown, otherwise it is ignored.<br>
+     *     如果dynamic = false , 数据会被持久化。 如果注册数据丢失了，会抛出异常，否则会被忽略。
      * 2. Unregister according to the full url match.<br>
-     *
+     *     取消注册需要完整的URL匹配。
      * @param url Registration information , is not allowed to be empty, e.g: dubbo://10.20.153.10/org.apache.dubbo.foo.BarService?version=1.0.0&application=kylin
      */
     void unregister(URL url);
 
     /**
      * Subscribe to eligible registered data and automatically push when the registered data is changed.
+     * 订阅合适的注册数据，并且当注册数据被改变了的时候自动推送。
      * <p>
      * Subscribing need to support contracts:<br>
      * 1. When the URL sets the check=false parameter. When the registration fails, the exception is not thrown and retried in the background. <br>
