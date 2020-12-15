@@ -60,6 +60,7 @@ public interface Constants {
 
     /**
      * Whether to cache locally, default is true
+     * 是否启用本地缓存， 默认为true
      */
     String REGISTRY__LOCAL_FILE_CACHE_ENABLED = "file.cache";
 

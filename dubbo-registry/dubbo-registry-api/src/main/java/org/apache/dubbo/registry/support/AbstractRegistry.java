@@ -71,10 +71,13 @@ import static org.apache.dubbo.registry.Constants.REGISTRY__LOCAL_FILE_CACHE_ENA
 public abstract class AbstractRegistry implements Registry {
 
     // URL address separator, used in file cache, service provider URL separation
+    // URL地址分割器，用于本地缓存，分割服务提供者的URL.
     private static final char URL_SEPARATOR = ' ';
     // URL address separated regular expression for parsing the service provider URL list in the file cache
+    // 正则表达式的空格
     private static final String URL_SPLIT = "\\s+";
     // Max times to retry to save properties to local cache file
+    // 将属性保存到本地文件的最大重试次数
     private static final int MAX_RETRY_TIMES_SAVE_PROPERTIES = 3;
     // Log output
     protected final Logger logger = LoggerFactory.getLogger(getClass());
@@ -82,7 +85,7 @@ public abstract class AbstractRegistry implements Registry {
     private final Properties properties = new Properties();
     // File cache timing writing
     private final ExecutorService registryCacheExecutor = Executors.newFixedThreadPool(1, new NamedThreadFactory("DubboSaveRegistryCache", true));
-    // Is it synchronized to save the file
+    // Is it synchronized to save the file   是否同步保存文件
     private boolean syncSaveFile;
     private final AtomicLong lastCacheChanged = new AtomicLong();
     private final AtomicInteger savePropertiesRetryTimes = new AtomicInteger();
@@ -95,7 +98,7 @@ public abstract class AbstractRegistry implements Registry {
 
     public AbstractRegistry(URL url) {
         setUrl(url);
-        if (url.getParameter(REGISTRY__LOCAL_FILE_CACHE_ENABLED, true)) {
+        if (url.getParameter(REGISTRY__LOCAL_FILE_CACHE_ENABLED, true)) { // 默认为true
             // Start file save timer
             syncSaveFile = url.getParameter(REGISTRY_FILESAVE_SYNC_KEY, false);
             String defaultFilename = System.getProperty("user.home") + "/.dubbo/dubbo-registry-" + url.getParameter(APPLICATION_KEY) + "-" + url.getAddress().replaceAll(":", "-") + ".cache";
