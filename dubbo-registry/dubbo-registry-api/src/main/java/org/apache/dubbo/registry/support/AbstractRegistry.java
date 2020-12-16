@@ -67,6 +67,8 @@ import static org.apache.dubbo.registry.Constants.REGISTRY__LOCAL_FILE_CACHE_ENA
 
 /**
  * AbstractRegistry. (SPI, Prototype, ThreadSafe)
+ * 主要功能：
+ * 1. 提供了本地缓存，保障网络抖动时， 仍可以给消费者返回提供者的URL
  */
 public abstract class AbstractRegistry implements Registry {
 
@@ -90,10 +92,10 @@ public abstract class AbstractRegistry implements Registry {
     private final AtomicLong lastCacheChanged = new AtomicLong();
     private final AtomicInteger savePropertiesRetryTimes = new AtomicInteger();
     private final Set<URL> registered = new ConcurrentHashSet<>();
-    private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<>();
-    private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<>();
+    private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<>();    // 消费者订阅URL对应的Listener
+    private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<>();   // 消费者订阅URL，对应了多种分类的提供者的URL。
     private URL registryUrl;
-    // Local disk cache file
+    // Local disk cache file   文件目录为 System.getProperty("user.home") + "/.dubbo/dubbo-registry-" + #{applicationName} + "-" + url.getAddress().replaceAll(":", "-") + ".cache"
     private File file;
 
     public AbstractRegistry(URL url) {
@@ -166,6 +168,10 @@ public abstract class AbstractRegistry implements Registry {
         return lastCacheChanged;
     }
 
+    /**
+     * 将属性保存到本地文件中。
+     * @param version
+     */
     public void doSaveProperties(long version) {
         if (version < lastCacheChanged.get()) {
             return;
@@ -181,7 +187,7 @@ public abstract class AbstractRegistry implements Registry {
             }
             try (RandomAccessFile raf = new RandomAccessFile(lockfile, "rw");
                  FileChannel channel = raf.getChannel()) {
-                FileLock lock = channel.tryLock();
+                FileLock lock = channel.tryLock();     // 加锁，
                 if (lock == null) {
                     throw new IOException("Can not lock the registry cache file " + file.getAbsolutePath() + ", ignore and retry later, maybe multi java process use the file, please config: dubbo.registry.file=xxx.properties");
                 }
@@ -316,6 +322,7 @@ public abstract class AbstractRegistry implements Registry {
         if (logger.isInfoEnabled()) {
             logger.info("Subscribe: " + url);
         }
+        // 消费者订阅的URL对应的通知监听器。
         Set<NotifyListener> listeners = subscribed.computeIfAbsent(url, n -> new ConcurrentHashSet<>());
         listeners.add(listener);
     }
@@ -374,7 +381,7 @@ public abstract class AbstractRegistry implements Registry {
             return;
         }
 
-        for (Map.Entry<URL, Set<NotifyListener>> entry : getSubscribed().entrySet()) {
+        for (Map.Entry<URL, Set<NotifyListener>> entry : getSubscribed().entrySet()) { // 这里通知了一个接口所有的数据类型。但是每个数据类型是分开通知的。
             URL url = entry.getKey();
 
             if (!UrlUtils.isMatch(url, urls.get(0))) {
@@ -385,6 +392,7 @@ public abstract class AbstractRegistry implements Registry {
             if (listeners != null) {
                 for (NotifyListener listener : listeners) {
                     try {
+                        // 一个消费者URL对应的注册中心的替补的URL.
                         notify(url, listener, filterEmpty(url, urls));  // urls不为空，返回urls, 否则返回包含url的list
                     } catch (Throwable t) {
                         logger.error("Failed to notify registry event, urls: " + urls + ", cause: " + t.getMessage(), t);
@@ -396,10 +404,10 @@ public abstract class AbstractRegistry implements Registry {
 
     /**
      * Notify changes from the Provider side.
-     * 服务提供者
-     * @param url      consumer side url  消费端的url
+     * Provider端发生改变时通知。
+     * @param url      consumer side url        消费端的url
      * @param listener listener
-     * @param urls     provider latest urls 服务提供方url.
+     * @param urls     provider latest urls     服务提供方url. back up
      */
     protected void notify(URL url, NotifyListener listener, List<URL> urls) {
         if (url == null) {
@@ -416,7 +424,7 @@ public abstract class AbstractRegistry implements Registry {
         if (logger.isInfoEnabled()) {
             logger.info("Notify urls for subscribe url " + url + ", urls: " + urls);
         }
-        // keep every provider's category.
+        // keep every provider's category.  保存每个提供者的种类
         Map<String, List<URL>> result = new HashMap<>();
         for (URL u : urls) {
             if (UrlUtils.isMatch(url, u)) {
@@ -433,7 +441,7 @@ public abstract class AbstractRegistry implements Registry {
             String category = entry.getKey();
             List<URL> categoryList = entry.getValue();
             categoryNotified.put(category, categoryList);
-            listener.notify(categoryList);
+            listener.notify(categoryList);   // 通知这个数据类型所有的URL
             // We will update our cache file after each notification.
             // When our Registry has a subscribe failure due to network jitter, we can return at least the existing cache URL.
             saveProperties(url);
@@ -458,9 +466,10 @@ public abstract class AbstractRegistry implements Registry {
                     }
                 }
             }
+            // 一个Service, 对应了多个不同类型的Provider URL.
             properties.setProperty(url.getServiceKey(), buf.toString());
             long version = lastCacheChanged.incrementAndGet();
-            if (syncSaveFile) {
+            if (syncSaveFile) {   // 是否同步保存文件
                 doSaveProperties(version);
             } else {
                 registryCacheExecutor.execute(new SaveProperties(version));

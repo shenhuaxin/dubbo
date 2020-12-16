@@ -378,6 +378,12 @@ public class UrlUtils {
                 + (version == null ? "" : "&" + VERSION_KEY + "=" + version));
     }
 
+    /**
+     *
+     * @param category
+     * @param categories
+     * @return
+     */
     public static boolean isMatchCategory(String category, String categories) {
         if (categories == null || categories.length() == 0) {
             return DEFAULT_CATEGORY.equals(category);
@@ -399,7 +405,7 @@ public class UrlUtils {
                 || StringUtils.isEquals(consumerInterface, providerInterface))) {
             return false;
         }
-
+        // 这时候， 要不consumerInterface和providerInterface相等， 要不其中至少一个为  *
         if (!isMatchCategory(providerUrl.getParameter(CATEGORY_KEY, DEFAULT_CATEGORY),
                 consumerUrl.getParameter(CATEGORY_KEY, DEFAULT_CATEGORY))) {
             return false;
@@ -416,6 +422,7 @@ public class UrlUtils {
         String providerGroup = providerUrl.getParameter(GROUP_KEY);
         String providerVersion = providerUrl.getParameter(VERSION_KEY);
         String providerClassifier = providerUrl.getParameter(CLASSIFIER_KEY, ANY_VALUE);
+        // 分组相同， 版本号相同， classifier相同。
         return (ANY_VALUE.equals(consumerGroup) || StringUtils.isEquals(consumerGroup, providerGroup) || StringUtils.isContains(consumerGroup, providerGroup))
                 && (ANY_VALUE.equals(consumerVersion) || StringUtils.isEquals(consumerVersion, providerVersion))
                 && (consumerClassifier == null || ANY_VALUE.equals(consumerClassifier) || StringUtils.isEquals(consumerClassifier, providerClassifier));
