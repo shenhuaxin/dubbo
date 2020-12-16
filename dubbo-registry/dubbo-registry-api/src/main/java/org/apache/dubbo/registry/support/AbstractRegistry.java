@@ -115,6 +115,7 @@ public abstract class AbstractRegistry implements Registry {
             this.file = file;
             // When starting the subscription center,
             // we need to read the local cache file for future Registry fault tolerance processing.
+            // 从本地文件读取数据到properties中。
             loadProperties();
             notify(url.getBackupUrls());
         }
@@ -365,6 +366,9 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
+    /**
+     * @param urls  回调地址
+     */
     protected void notify(List<URL> urls) {
         if (CollectionUtils.isEmpty(urls)) {
             return;
@@ -381,7 +385,7 @@ public abstract class AbstractRegistry implements Registry {
             if (listeners != null) {
                 for (NotifyListener listener : listeners) {
                     try {
-                        notify(url, listener, filterEmpty(url, urls));
+                        notify(url, listener, filterEmpty(url, urls));  // urls不为空，返回urls, 否则返回包含url的list
                     } catch (Throwable t) {
                         logger.error("Failed to notify registry event, urls: " + urls + ", cause: " + t.getMessage(), t);
                     }
@@ -392,10 +396,10 @@ public abstract class AbstractRegistry implements Registry {
 
     /**
      * Notify changes from the Provider side.
-     *
-     * @param url      consumer side url
+     * 服务提供者
+     * @param url      consumer side url  消费端的url
      * @param listener listener
-     * @param urls     provider latest urls
+     * @param urls     provider latest urls 服务提供方url.
      */
     protected void notify(URL url, NotifyListener listener, List<URL> urls) {
         if (url == null) {
