@@ -85,15 +85,16 @@ public abstract class AbstractRegistry implements Registry {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     // Local disk cache, where the special key value.registries records the list of registry centers, and the others are the list of notified service providers
     private final Properties properties = new Properties();
-    // File cache timing writing
+    // File cache timing writing    异步保存文件的线程池
     private final ExecutorService registryCacheExecutor = Executors.newFixedThreadPool(1, new NamedThreadFactory("DubboSaveRegistryCache", true));
     // Is it synchronized to save the file   是否同步保存文件
     private boolean syncSaveFile;
     private final AtomicLong lastCacheChanged = new AtomicLong();
     private final AtomicInteger savePropertiesRetryTimes = new AtomicInteger();
-    private final Set<URL> registered = new ConcurrentHashSet<>();
-    private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<>();    // 消费者订阅URL对应的Listener
-    private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<>();   // 消费者订阅URL，对应了多种分类的提供者的URL。
+    private final Set<URL> registered = new ConcurrentHashSet<>();                                   // 注册的URL。
+    private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<>();    // 订阅的URL和其对应的Listener
+    private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<>();   // 订阅的URL ->  （不同分类 -> 服务提供者的信息）。
+
     private URL registryUrl;
     // Local disk cache file   文件目录为 System.getProperty("user.home") + "/.dubbo/dubbo-registry-" + #{applicationName} + "-" + url.getAddress().replaceAll(":", "-") + ".cache"
     private File file;
@@ -119,7 +120,7 @@ public abstract class AbstractRegistry implements Registry {
             // we need to read the local cache file for future Registry fault tolerance processing.
             // 从本地文件读取数据到properties中。
             loadProperties();
-            notify(url.getBackupUrls());
+            notify(url.getBackupUrls());  // 执行通知
         }
     }
 
@@ -340,13 +341,16 @@ public abstract class AbstractRegistry implements Registry {
         }
         Set<NotifyListener> listeners = subscribed.get(url);
         if (listeners != null) {
-            listeners.remove(listener);
+            listeners.remove(listener);    // 删除订阅的这个Service所有的Listener
         }
 
         // do not forget remove notified
-        notified.remove(url);
+        notified.remove(url);             // 删除订阅这个Service所有的 provider 所有的不同类别的URL
     }
 
+    /**
+     * 当网络断开， provider需要重新注册， consumer需要重新订阅
+     */
     protected void recover() throws Exception {
         // register
         Set<URL> recoverRegistered = new HashSet<>(getRegistered());
@@ -479,6 +483,7 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
+    // 取消注册、取消订阅
     @Override
     public void destroy() {
         if (logger.isInfoEnabled()) {
@@ -487,7 +492,7 @@ public abstract class AbstractRegistry implements Registry {
         Set<URL> destroyRegistered = new HashSet<>(getRegistered());
         if (!destroyRegistered.isEmpty()) {
             for (URL url : new HashSet<>(getRegistered())) {
-                if (url.getParameter(DYNAMIC_KEY, true)) {
+                if (url.getParameter(DYNAMIC_KEY, true)) {  // 排除 dynamic = false 的注册，（不进行删除）
                     try {
                         unregister(url);
                         if (logger.isInfoEnabled()) {
