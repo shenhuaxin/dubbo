@@ -68,7 +68,8 @@ import static org.apache.dubbo.registry.Constants.REGISTRY__LOCAL_FILE_CACHE_ENA
 /**
  * AbstractRegistry. (SPI, Prototype, ThreadSafe)
  * 主要功能：
- * 1. 提供了本地缓存，保障网络抖动时， 仍可以给消费者返回提供者的URL
+ * 1. 提供了基础的服务注册、订阅的功能。
+ * 2. 提供了本地缓存，保障网络抖动时， 仍可以给消费者返回提供者的URL
  */
 public abstract class AbstractRegistry implements Registry {
 
@@ -298,7 +299,7 @@ public abstract class AbstractRegistry implements Registry {
         if (logger.isInfoEnabled()) {
             logger.info("Register: " + url);
         }
-        registered.add(url);
+        registered.add(url);   //向注册列表中添加一条记录
     }
 
     @Override
@@ -407,6 +408,9 @@ public abstract class AbstractRegistry implements Registry {
     }
 
     /**
+     * 调用地方：
+     * 1. Registry实例化时
+     * 2. subscribe
      * Notify changes from the Provider side.
      * Provider端发生改变时通知。
      * @param url      consumer side url        消费端的url

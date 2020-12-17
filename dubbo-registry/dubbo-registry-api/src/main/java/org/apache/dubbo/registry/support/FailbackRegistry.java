@@ -65,29 +65,30 @@ public abstract class FailbackRegistry extends AbstractRegistry {
     private final HashedWheelTimer retryTimer;
 
     public FailbackRegistry(URL url) {
-        super(url);
+        super(url);          // 加载properties
         this.retryPeriod = url.getParameter(REGISTRY_RETRY_PERIOD_KEY, DEFAULT_REGISTRY_RETRY_PERIOD);
 
         // since the retry task will not be very much. 128 ticks is enough.
+        // 因为重试任务不会太多，128个刻度足够了
         retryTimer = new HashedWheelTimer(new NamedThreadFactory("DubboRegistryRetryTimer", true), retryPeriod, TimeUnit.MILLISECONDS, 128);
     }
 
     public void removeFailedRegisteredTask(URL url) {
-        failedRegistered.remove(url);
+        failedRegistered.remove(url);   // 从注册失败列表中移除
     }
 
     public void removeFailedUnregisteredTask(URL url) {
-        failedUnregistered.remove(url);
+        failedUnregistered.remove(url);  // 从取消注册失败列表中移除。
     }
 
     public void removeFailedSubscribedTask(URL url, NotifyListener listener) {
         Holder h = new Holder(url, listener);
-        failedSubscribed.remove(h);
+        failedSubscribed.remove(h);     // 从订阅失败列表中移除
     }
 
     public void removeFailedUnsubscribedTask(URL url, NotifyListener listener) {
         Holder h = new Holder(url, listener);
-        failedUnsubscribed.remove(h);
+        failedUnsubscribed.remove(h);   // 从取消订阅失败列表中移除
     }
 
     private void addFailedRegistered(URL url) {
@@ -99,6 +100,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         oldOne = failedRegistered.putIfAbsent(url, newTask);
         if (oldOne == null) {
             // never has a retry task. then start a new task for retry.
+            // 如果之前没有移除这个URL的task, 开启一个新的任务。
             retryTimer.newTimeout(newTask, retryPeriod, TimeUnit.MILLISECONDS);
         }
     }
@@ -111,6 +113,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
     }
 
     private void addFailedUnregistered(URL url) {
+        // 为什么要先get , 再使用 putIfAbsent，  我的理解是， get没有加锁，效率更高，并且为空的概率比较大，可以提高性能。
         FailedUnregisteredTask oldOne = failedUnregistered.get(url);
         if (oldOne != null) {
             return;
@@ -198,9 +201,9 @@ public abstract class FailbackRegistry extends AbstractRegistry {
             logger.info("URL " + url + " will not be registered to Registry. Registry " + url + " does not accept service of this protocol type.");
             return;
         }
-        super.register(url);
-        removeFailedRegistered(url);
-        removeFailedUnregistered(url);
+        super.register(url);    // 调用父类的注册方法，将url放入registered中
+        removeFailedRegistered(url);     // 从注册失败列表中移除
+        removeFailedUnregistered(url);   // 从取消注册失败列表中移除
         try {
             // Sending a registration request to the server side
             // 发送注册请求到注册中心
@@ -209,9 +212,10 @@ public abstract class FailbackRegistry extends AbstractRegistry {
             Throwable t = e;
 
             // If the startup detection is opened, the Exception is thrown directly.
+            // 如何开启了启动检查，直接抛出异常， 启动检查是检查依赖的服务是否可用, 以便上线时,能及早发现问题.
             boolean check = getUrl().getParameter(Constants.CHECK_KEY, true)
                     && url.getParameter(Constants.CHECK_KEY, true)
-                    && !CONSUMER_PROTOCOL.equals(url.getProtocol());
+                    && !CONSUMER_PROTOCOL.equals(url.getProtocol());  // 消费者
             boolean skipFailback = t instanceof SkipFailbackWrapperException;
             if (check || skipFailback) {
                 if (skipFailback) {
@@ -223,10 +227,14 @@ public abstract class FailbackRegistry extends AbstractRegistry {
             }
 
             // Record a failed registration request to a failed list, retry regularly
-            addFailedRegistered(url);
+            addFailedRegistered(url);  // 将注册失败的请求加入到失败列表中, 定期重试.
         }
     }
 
+    /**
+     * 相比register， 减少了启动检查
+     * @param url
+     */
     @Override
     public void reExportRegister(URL url) {
         if (!acceptable(url)) {
@@ -253,6 +261,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         removeFailedUnregistered(url);
         try {
             // Sending a cancellation request to the server side
+            // 将取消注册请求发送给注册中心
             doUnregister(url);
         } catch (Exception e) {
             Throwable t = e;
@@ -276,6 +285,10 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         }
     }
 
+    /**
+     * 相比unregister， 减少了启动检查
+     * @param url
+     */
     @Override
     public void reExportUnregister(URL url) {
         super.unregister(url);
@@ -297,13 +310,14 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         removeFailedSubscribed(url, listener);
         try {
             // Sending a subscription request to the server side
+            // 发送订阅请求到服务端
             doSubscribe(url, listener);
         } catch (Exception e) {
             Throwable t = e;
 
-            List<URL> urls = getCacheUrls(url);
+            List<URL> urls = getCacheUrls(url);   // 从本地缓存中获取 provider url。 防止网络抖动
             if (CollectionUtils.isNotEmpty(urls)) {
-                notify(url, listener, urls);
+                notify(url, listener, urls);      // 监听器
                 logger.error("Failed to subscribe " + url + ", Using cached list: " + urls + " from cache file: " + getUrl().getParameter(FILE_KEY, System.getProperty("user.home") + "/dubbo-registry-" + url.getHost() + ".cache") + ", cause: " + t.getMessage(), t);
             } else {
                 // If the startup detection is opened, the Exception is thrown directly.
@@ -403,7 +417,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
     @Override
     public void destroy() {
         super.destroy();
-        retryTimer.stop();
+        retryTimer.stop();    // 停止时间轮
     }
 
     // ==== Template method ====
