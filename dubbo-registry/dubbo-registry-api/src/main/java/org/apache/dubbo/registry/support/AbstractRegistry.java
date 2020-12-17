@@ -412,9 +412,9 @@ public abstract class AbstractRegistry implements Registry {
      * 1. Registry实例化时
      * 2. subscribe
      * Notify changes from the Provider side.
-     * Provider端发生改变时通知。
-     * @param url      consumer side url        消费端的url
-     * @param listener listener
+     * 功能： 订阅的URL, 获得了哪些服务提供方的URL。
+     * @param url      consumer side url        订阅的URL
+     * @param listener listener                 监听器
      * @param urls     provider latest urls     服务提供方url. back up
      */
     protected void notify(URL url, NotifyListener listener, List<URL> urls) {
