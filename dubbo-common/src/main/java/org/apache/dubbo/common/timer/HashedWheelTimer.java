@@ -456,11 +456,11 @@ public class HashedWheelTimer implements Timer {
             }
 
             // Notify the other threads waiting for the initialization at start().
-            startTimeInitialized.countDown();         // 让 start() 向下执行
+            startTimeInitialized.countDown();         // 让 HashedWheelTimer.start() 向下执行
 
             // 循环执行任务
             do {
-                final long deadline = waitForNextTick();
+                final long deadline = waitForNextTick();    // 当前刻度的最后时间，在这个时间之前的任务都需要执行。
                 if (deadline > 0) {
                     int idx = (int) (tick & mask);   // 该轮到wheel的那个bucket
                     processCancelledTasks();
@@ -748,7 +748,7 @@ public class HashedWheelTimer implements Timer {
             while (timeout != null) {
                 HashedWheelTimeout next = timeout.next;
                 if (timeout.remainingRounds <= 0) {   // 小于等于0， 说明应该在这一轮执行。
-                    next = remove(timeout);
+                    next = remove(timeout);     // 从bucket中移除
                     if (timeout.deadline <= deadline) {
                         timeout.expire();     // 执行任务
                     } else {
