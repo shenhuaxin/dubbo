@@ -22,6 +22,7 @@ import org.apache.dubbo.common.timer.Timeout;
 import org.apache.dubbo.registry.support.FailbackRegistry;
 
 /**
+ * 注册失败之后的重试任务
  * FailedRegisteredTask
  */
 public final class FailedRegisteredTask extends AbstractRetryTask {
@@ -34,7 +35,7 @@ public final class FailedRegisteredTask extends AbstractRetryTask {
 
     @Override
     protected void doRetry(URL url, FailbackRegistry registry, Timeout timeout) {
-        registry.doRegister(url);
-        registry.removeFailedRegisteredTask(url);
+        registry.doRegister(url);                   // 再次尝试注册。
+        registry.removeFailedRegisteredTask(url);   // 注册成功将该任务移除
     }
 }

@@ -92,9 +92,9 @@ public abstract class AbstractRegistry implements Registry {
     private boolean syncSaveFile;
     private final AtomicLong lastCacheChanged = new AtomicLong();
     private final AtomicInteger savePropertiesRetryTimes = new AtomicInteger();
-    private final Set<URL> registered = new ConcurrentHashSet<>();                                   // 注册的URL。
-    private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<>();    // 订阅的URL和其对应的Listener
-    private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<>();   // 订阅的URL ->  （不同分类 -> 服务提供者的信息）。
+    private final Set<URL> registered = new ConcurrentHashSet<>();                                   // 保存已经注册成功的URL。（服务）
+    private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<>();    // 保存已经订阅成功的URL和其对应的Listener（服务）
+    private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<>();   // 订阅的URL  ->  （不同分类 -> 服务提供者的信息(主机)）。
 
     private URL registryUrl;
     // Local disk cache file   文件目录为 System.getProperty("user.home") + "/.dubbo/dubbo-registry-" + #{applicationName} + "-" + url.getAddress().replaceAll(":", "-") + ".cache"

@@ -43,7 +43,7 @@ public interface CommonConstants {
 
     String DEFAULT_DUBBO_PROPERTIES = "dubbo.properties";
 
-    String ANY_VALUE = "*";
+    String ANY_VALUE = "*";     // * 代表全匹配。也就是这个路径的所有子路径都匹配。
 
     /**
      * @since 2.7.8

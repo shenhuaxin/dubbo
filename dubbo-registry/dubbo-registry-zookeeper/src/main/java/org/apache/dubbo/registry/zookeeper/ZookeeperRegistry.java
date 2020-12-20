@@ -56,8 +56,8 @@ import static org.apache.dubbo.common.constants.RegistryConstants.PROVIDERS_CATE
 import static org.apache.dubbo.common.constants.RegistryConstants.ROUTERS_CATEGORY;
 
 /**
+ * Zookeeper注册器
  * ZookeeperRegistry
- *
  */
 public class ZookeeperRegistry extends FailbackRegistry {
 
@@ -67,7 +67,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
 
     private final String root;
 
-    private final Set<String> anyServices = new ConcurrentHashSet<>();
+    private final Set<String> anyServices = new ConcurrentHashSet<>();      // 所有的服务
 
     private final ConcurrentMap<URL, ConcurrentMap<NotifyListener, ChildListener>> zkListeners = new ConcurrentHashMap<>();
 
@@ -83,14 +83,17 @@ public class ZookeeperRegistry extends FailbackRegistry {
             group = PATH_SEPARATOR + group;
         }
         this.root = group;
-        zkClient = zookeeperTransporter.connect(url);
-        zkClient.addStateListener((state) -> {
+        zkClient = zookeeperTransporter.connect(url);    // 创建ZkClient对象
+        zkClient.addStateListener((state) -> {           // 添加状态监听器
+            // 监听Dubbo与Zookeeper连接状态。
             if (state == StateListener.RECONNECTED) {
+                // 尝试获取最新的url, 因为可能在连接丢失的时候出现提供者发生改变。临时节点不会因为连接丢失而被删除，这个实例也就不需要重新注册url。
                 logger.warn("Trying to fetch the latest urls, in case there're provider changes during connection loss.\n" +
                         " Since ephemeral ZNode will not get deleted for a connection lose, " +
                         "there's no need to re-register url of this instance.");
                 ZookeeperRegistry.this.fetchLatestAddresses();
             } else if (state == StateListener.NEW_SESSION_CREATED) {
+                // 尝试重新注册和重新订阅
                 logger.warn("Trying to re-register urls and re-subscribe listeners of this instance to registry...");
                 try {
                     ZookeeperRegistry.this.recover();
@@ -98,6 +101,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
                     logger.error(e.getMessage(), e);
                 }
             } else if (state == StateListener.SESSION_LOST) {
+                // 这个实例的URL将会被注册中心删除。
                 logger.warn("Url of this instance will be deleted from registry soon. " +
                         "Dubbo client will try to re-register once a new session is created.");
             } else if (state == StateListener.SUSPENDED) {
@@ -126,7 +130,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
     @Override
     public void doRegister(URL url) {
         try {
-            zkClient.create(toUrlPath(url), url.getParameter(DYNAMIC_KEY, true));
+            zkClient.create(toUrlPath(url), url.getParameter(DYNAMIC_KEY, true)); // 在Zookeeper中创建节点
         } catch (Throwable e) {
             throw new RpcException("Failed to register " + url + " to zookeeper " + getUrl() + ", cause: " + e.getMessage(), e);
         }
@@ -144,27 +148,31 @@ public class ZookeeperRegistry extends FailbackRegistry {
     @Override
     public void doSubscribe(final URL url, final NotifyListener listener) {
         try {
-            if (ANY_VALUE.equals(url.getServiceInterface())) {
+            if (ANY_VALUE.equals(url.getServiceInterface())) {    // 订阅所有服务， Monitor会发出这样的订阅请求。 如果我们自己做对Dubbo服务的监控，也可以这样。
                 String root = toRootPath();
                 ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.computeIfAbsent(url, k -> new ConcurrentHashMap<>());
+                // 函数式编程， 先定义行为， 后面在使用。
+                // ChildListener监听某个ZNode节点下子节点的变化
                 ChildListener zkListener = listeners.computeIfAbsent(listener, k -> (parentPath, currentChilds) -> {
+                    // k是NotifyListener， 后面的是ChildListener.
+                    // 获取这个listener对应的ChildListener
                     for (String child : currentChilds) {
                         child = URL.decode(child);
                         if (!anyServices.contains(child)) {
                             anyServices.add(child);
                             subscribe(url.setPath(child).addParameters(INTERFACE_KEY, child,
-                                    Constants.CHECK_KEY, String.valueOf(false)), k);
+                                    Constants.CHECK_KEY, String.valueOf(false)), k);   // 发生变化后，重新订阅URL的子节点
                         }
                     }
                 });
-                zkClient.create(root, false);
+                zkClient.create(root, false);     // 这里是root节点
                 List<String> services = zkClient.addChildListener(root, zkListener);
                 if (CollectionUtils.isNotEmpty(services)) {
                     for (String service : services) {
                         service = URL.decode(service);
                         anyServices.add(service);
                         subscribe(url.setPath(service).addParameters(INTERFACE_KEY, service,
-                                Constants.CHECK_KEY, String.valueOf(false)), listener);
+                                Constants.CHECK_KEY, String.valueOf(false)), listener);   // 订阅root节点下的所有URL
                     }
                 }
             } else {
@@ -172,13 +180,13 @@ public class ZookeeperRegistry extends FailbackRegistry {
                 for (String path : toCategoriesPath(url)) {
                     ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.computeIfAbsent(url, k -> new ConcurrentHashMap<>());
                     ChildListener zkListener = listeners.computeIfAbsent(listener, k -> (parentPath, currentChilds) -> ZookeeperRegistry.this.notify(url, k, toUrlsWithEmpty(url, parentPath, currentChilds)));
-                    zkClient.create(path, false);
+                    zkClient.create(path, false);   //这里是path节点
                     List<String> children = zkClient.addChildListener(path, zkListener);
                     if (children != null) {
                         urls.addAll(toUrlsWithEmpty(url, path, children));
                     }
                 }
-                notify(url, listener, urls);
+                notify(url, listener, urls);     // 为什么这里是notify, 而上面是subscribe？ 因为在FailbackRegistry已经调用了subscribe。而上面主要是subscribe root节点下的子节点。而不是root。
             }
         } catch (Throwable e) {
             throw new RpcException("Failed to subscribe " + url + " to zookeeper " + getUrl() + ", cause: " + e.getMessage(), e);
@@ -293,6 +301,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
     }
 
     /**
+     * 当zk从一次连接断开后重连，他需要获取最新的提供者列表。
      * When zookeeper connection recovered from a connection loss, it need to fetch the latest provider list.
      * re-register watcher is only a side effect and is not mandate.
      */
