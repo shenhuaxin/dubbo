@@ -26,4 +26,10 @@ public class CustomTest {
         Method adaptive = adaptiveClassClass.getMethod("adaptive");
         System.out.println(adaptive.isAnnotationPresent(Adaptive.class));
     }
+
+
+    @Test
+    public void test() {
+        System.out.println(System.nanoTime());
+    }
 }

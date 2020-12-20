@@ -17,6 +17,8 @@
 package org.apache.dubbo.common.timer;
 
 /**
+ * // 为什么要叫 Timeout , 因为和时间密切相关。任务是否应该执行，就要当前时间有没有过期。
+ * 所以唯一的实现类中执行任务的函数，叫作 expire 。  （个人理解）
  * A handle associated with a {@link TimerTask} that is returned by a
  * {@link Timer}.
  */
