@@ -26,6 +26,7 @@ import java.io.OutputStream;
 
 /**
  * Hessian2 object output implementation
+ * 将对象或者基础类型的数据写入输出流
  */
 public class Hessian2ObjectOutput implements ObjectOutput {
 

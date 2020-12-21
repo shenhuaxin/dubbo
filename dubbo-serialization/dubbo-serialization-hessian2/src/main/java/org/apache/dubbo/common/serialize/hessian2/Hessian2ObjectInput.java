@@ -27,6 +27,7 @@ import java.lang.reflect.Type;
 
 /**
  * Hessian2 object input implementation
+ * 将输入流中的数据读出来，返回为基础数据或者对象。
  */
 public class Hessian2ObjectInput implements ObjectInput {
 
