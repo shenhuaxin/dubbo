@@ -21,6 +21,7 @@ import java.util.Map;
 
 /**
  * Object output interface.
+ * 对象输出接口 （继承了DataOutput）
  */
 public interface ObjectOutput extends DataOutput {
 
@@ -46,6 +47,7 @@ public interface ObjectOutput extends DataOutput {
      * https://tools.ietf.org/html/rfc7540#section-8.1.2
      */
     default void writeThrowable(Object obj) throws IOException {
+        // 输出异常
         writeObject(obj);
     }
 

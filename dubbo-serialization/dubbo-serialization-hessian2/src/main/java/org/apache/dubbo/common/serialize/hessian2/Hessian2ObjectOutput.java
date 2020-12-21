@@ -29,6 +29,7 @@ import java.io.OutputStream;
  */
 public class Hessian2ObjectOutput implements ObjectOutput {
 
+    // ThreadLocal
     private static ThreadLocal<Hessian2Output> OUTPUT_TL = ThreadLocal.withInitial(() -> {
         Hessian2Output h2o = new Hessian2Output(null);
         h2o.setSerializerFactory(Hessian2FactoryInitializer.getInstance().getSerializerFactory());

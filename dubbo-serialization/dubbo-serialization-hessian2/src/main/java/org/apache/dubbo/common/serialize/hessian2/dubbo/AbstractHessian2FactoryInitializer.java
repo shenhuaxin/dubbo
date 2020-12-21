@@ -18,6 +18,10 @@ package org.apache.dubbo.common.serialize.hessian2.dubbo;
 
 import com.alibaba.com.caucho.hessian.io.SerializerFactory;
 
+
+/**
+ * 抽象初始化 Hessian工厂初始化器
+ */
 public abstract class AbstractHessian2FactoryInitializer implements Hessian2FactoryInitializer {
     private static SerializerFactory SERIALIZER_FACTORY;
 
@@ -27,7 +31,7 @@ public abstract class AbstractHessian2FactoryInitializer implements Hessian2Fact
             return SERIALIZER_FACTORY;
         }
         synchronized (this) {
-            SERIALIZER_FACTORY = createSerializerFactory();
+            SERIALIZER_FACTORY = createSerializerFactory();   // 交给子类创建工厂
         }
         return SERIALIZER_FACTORY;
     }

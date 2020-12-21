@@ -29,7 +29,7 @@ import static org.apache.dubbo.common.serialize.Constants.HESSIAN2_SERIALIZATION
 
 /**
  * Hessian2 serialization implementation, hessian2 is the default serialization protocol for dubbo
- *
+ * Hessian2 序列化实现， hessian2 是 Dubbo默认的序列化实现。
  * <pre>
  *     e.g. &lt;dubbo:protocol serialization="hessian2" /&gt;
  * </pre>

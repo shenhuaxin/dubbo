@@ -23,6 +23,6 @@ import com.alibaba.com.caucho.hessian.io.SerializerFactory;
 public class DefaultHessian2FactoryInitializer extends AbstractHessian2FactoryInitializer {
     @Override
     protected SerializerFactory createSerializerFactory() {
-        return new Hessian2SerializerFactory();
+        return new Hessian2SerializerFactory();     // 创建普通工厂
     }
 }

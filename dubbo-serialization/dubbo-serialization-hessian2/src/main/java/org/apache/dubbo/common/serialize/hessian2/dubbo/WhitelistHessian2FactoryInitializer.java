@@ -24,6 +24,8 @@ import com.alibaba.com.caucho.hessian.io.SerializerFactory;
 
 /**
  * see https://github.com/ebourg/hessian/commit/cf851f5131707891e723f7f6a9718c2461aed826
+ *
+ * Hessian 白名单和黑名单配置
  */
 public class WhitelistHessian2FactoryInitializer extends AbstractHessian2FactoryInitializer {
 
@@ -31,13 +33,21 @@ public class WhitelistHessian2FactoryInitializer extends AbstractHessian2Factory
     public SerializerFactory createSerializerFactory() {
         SerializerFactory serializerFactory = new Hessian2SerializerFactory();
         String whiteList = ConfigurationUtils.getProperty(WHITELIST);
-        if ("true".equals(whiteList)) {
+        if ("true".equals(whiteList)) {  // 白名单
+            /**
+             * -Ddubbo.application.hessian2.whitelist=true
+             * -Ddubbo.application.hessian2.allow="org.apache.dubbo.demo.*"
+             */
             serializerFactory.getClassFactory().setWhitelist(true);
             String allowPattern = ConfigurationUtils.getProperty(ALLOW);
             if (StringUtils.isNotEmpty(allowPattern)) {
                 serializerFactory.getClassFactory().allow(allowPattern);
             }
-        } else {
+        } else {                       // 黑名单
+            /**
+             * -Ddubbo.application.hessian2.whitelist=false
+             * -Ddubbo.application.hessian2.deny="org.malicious.code.*"
+             */
             serializerFactory.getClassFactory().setWhitelist(false);
             String denyPattern = ConfigurationUtils.getProperty(DENY);
             if (StringUtils.isNotEmpty(denyPattern)) {

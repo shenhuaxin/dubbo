@@ -23,6 +23,9 @@ import org.apache.dubbo.common.utils.StringUtils;
 
 import com.alibaba.com.caucho.hessian.io.SerializerFactory;
 
+/**
+ * 工厂初始化器
+ */
 @SPI("default")
 public interface Hessian2FactoryInitializer {
     String WHITELIST = "dubbo.application.hessian2.whitelist";

@@ -20,6 +20,7 @@ import java.io.IOException;
 
 /**
  * Basic data type output interface.
+ * 基础数据类型 输出接口
  */
 public interface DataOutput {
 
@@ -81,7 +82,7 @@ public interface DataOutput {
 
     /**
      * Write string.
-     *
+     * 以UTF8编码输出
      * @param v value.
      * @throws IOException
      */
