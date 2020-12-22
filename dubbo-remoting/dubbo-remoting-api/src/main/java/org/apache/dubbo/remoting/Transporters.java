@@ -29,6 +29,7 @@ public class Transporters {
 
     static {
         // check duplicate jar package
+        // 检查在Jar包中是否存在相同的类
         Version.checkDuplicate(Transporters.class);
         Version.checkDuplicate(RemotingException.class);
     }
@@ -53,7 +54,7 @@ public class Transporters {
         } else {
             handler = new ChannelHandlerDispatcher(handlers);
         }
-        return getTransporter().bind(url, handler);
+        return getTransporter().bind(url, handler);    // 监听地址。
     }
 
     public static Client connect(String url, ChannelHandler... handler) throws RemotingException {
@@ -72,7 +73,7 @@ public class Transporters {
         } else {
             handler = new ChannelHandlerDispatcher(handlers);
         }
-        return getTransporter().connect(url, handler);
+        return getTransporter().connect(url, handler);  // 连接某个地址
     }
 
     public static Transporter getTransporter() {

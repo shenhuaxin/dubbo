@@ -20,6 +20,10 @@ package org.apache.dubbo.remoting.buffer;
 import java.io.IOException;
 import java.io.InputStream;
 
+
+/**
+ * 继承InputStream, 将ChannelBuffer中的数据读出。
+ */
 public class ChannelBufferInputStream extends InputStream {
 
     private final ChannelBuffer buffer;

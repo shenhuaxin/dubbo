@@ -40,14 +40,15 @@ import static org.apache.dubbo.common.constants.CommonConstants.DEFAULT_CLIENT_T
 import static org.apache.dubbo.common.constants.CommonConstants.THREADPOOL_KEY;
 
 /**
+ * 抽象客户端
  * AbstractClient
  */
 public abstract class AbstractClient extends AbstractEndpoint implements Client {
 
-    protected static final String CLIENT_THREAD_POOL_NAME = "DubboClientHandler";
+    protected static final String CLIENT_THREAD_POOL_NAME = "DubboClientHandler";       // 客户端线程池名称
     private static final Logger logger = LoggerFactory.getLogger(AbstractClient.class);
-    private final Lock connectLock = new ReentrantLock();
-    private final boolean needReconnect;
+    private final Lock connectLock = new ReentrantLock();                               // 锁， 连接、断开连接、重连、关闭
+    private final boolean needReconnect;                                                // 从参数中获取是否需要重连
     protected volatile ExecutorService executor;
     private ExecutorRepository executorRepository = ExtensionLoader.getExtensionLoader(ExecutorRepository.class).getDefaultExtension();
 

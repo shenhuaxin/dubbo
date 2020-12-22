@@ -51,7 +51,7 @@ public abstract class AbstractEndpoint extends AbstractPeer implements Resetable
     }
 
     protected static Codec2 getChannelCodec(URL url) {
-        String codecName = url.getProtocol(); // codec extension name must stay the same with protocol name
+        String codecName = url.getProtocol(); // codec extension name must stay the same with protocol name    codec扩展名必须和protocol名保持一致
         if (ExtensionLoader.getExtensionLoader(Codec2.class).hasExtension(codecName)) {
             return ExtensionLoader.getExtensionLoader(Codec2.class).getExtension(codecName);
         } else {
@@ -60,6 +60,7 @@ public abstract class AbstractEndpoint extends AbstractPeer implements Resetable
         }
     }
 
+    // 根据URL参数中的值， 重置codec、timeout、connectTimeout
     @Override
     public void reset(URL url) {
         if (isClosed()) {

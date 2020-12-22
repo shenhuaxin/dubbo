@@ -20,6 +20,9 @@ package org.apache.dubbo.remoting.buffer;
 import java.io.IOException;
 import java.io.OutputStream;
 
+/**
+ * 继承OutputStream, 将字节写入 ChannelBuffer
+ */
 public class ChannelBufferOutputStream extends OutputStream {
 
     private final ChannelBuffer buffer;

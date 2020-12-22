@@ -23,18 +23,26 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 /**
+ * 复制的Netty的代码
+ *
+ * 一个可以随机和顺序访问的字节序列。
+ * 这个接口提供了一个或者多个 字节数组和NIO buffer 的抽象视图。
+ *
  * A random and sequential accessible sequence of zero or more bytes (octets).
  * This interface provides an abstract view for one or more primitive byte
  * arrays ({@code byte[]}) and {@linkplain ByteBuffer NIO buffers}.
  * <p/>
- * <h3>Creation of a buffer</h3>
+ * <h3>Creation of a buffer</h3>  创建一个buffer
  * <p/>
+ * 推荐使用ChannelBuffers中的函数创建一个新的buffer, 而不是调用一个实现类的构造函数
  * It is recommended to create a new buffer using the helper methods in {@link
  * ChannelBuffers} rather than calling an individual implementation's
  * constructor.
  * <p/>
- * <h3>Random Access Indexing</h3>
+ * <h3>Random Access Indexing</h3>  随机索引访问
  * <p/>
+ * 就像原生的字节数组一样， ChannelBuffer 使用从 0 开始的下标。 这意味着第一个字节的下标为0， 并且最后一个字节的下标为 capacity - 1 .
+ * 例如，迭代一个buffer中的所有字节，你可以如下所示， 不需要知道内部实现。
  * Just like an ordinary primitive byte array, {@link ChannelBuffer} uses <a
  * href="http://en.wikipedia.org/wiki/Index_(information_technology)#Array_element_identifier">zero-based
  * indexing</a>. It means the index of the first byte is always {@code 0} and
@@ -50,8 +58,10 @@ import java.nio.ByteBuffer;
  * }
  * </pre>
  * <p/>
- * <h3>Sequential Access Indexing</h3>
+ * <h3>Sequential Access Indexing</h3>   顺序访问
  * <p/>
+ *
+ * ChannelBuffer 提供了两个指针变量支持顺序读和顺序写操作。 readerIndex用于读操作， writerIndex用于写操作。下图展示了一个buffer如何被两个指针分为三个区域。
  * {@link ChannelBuffer} provides two pointer variables to support sequential
  * read and write operations - {@link #readerIndex() readerIndex} for a read
  * operation and {@link #writerIndex() writerIndex} for a write operation
@@ -67,8 +77,10 @@ import java.nio.ByteBuffer;
  *      0      <=      readerIndex   <=   writerIndex    <=    capacity
  * </pre>
  * <p/>
- * <h4>Readable bytes (the actual content)</h4>
+ * <h4>Readable bytes (the actual content)</h4>   可读字节区域（真正的内容）
  * <p/>
+ * 这个部分是真正数据存放的地方， 以 read 和 skip 为开头的操作将会 得到或者跳过readerIndex上的数据，并且根据读取的字节数增加readerIndex。
+ * 如果 read 操作的参数也是 ChannelBuffer,并且没有指定读到哪个位置，那么这个buffer的 readerIndex也会一起增加。
  * This segment is where the actual data is stored.  Any operation whose name
  * starts with {@code read} or {@code skip} will get or skip the data at the
  * current {@link #readerIndex() readerIndex} and increase it by the number of
@@ -76,20 +88,23 @@ import java.nio.ByteBuffer;
  * ChannelBuffer} and no destination index is specified, the specified buffer's
  * {@link #readerIndex() readerIndex} is increased together.
  * <p/>
+ * 如果没有足够的content区域剩余， 将会抛出IndexOutOfBoundsException. 新创建、包装、复制的Buffer的readerIndex为0.
  * If there's not enough content left, {@link IndexOutOfBoundsException} is
  * raised.  The default value of newly allocated, wrapped or copied buffer's
  * {@link #readerIndex() readerIndex} is {@code 0}.
  * <p/>
  * <pre>
- * // Iterates the readable bytes of a buffer.
+ * // Iterates the readable bytes of a buffer.   迭代一个buffer中的 readable byte.
  * {@link ChannelBuffer} buffer = ...;
  * while (buffer.readable()) {
  *     System.out.println(buffer.readByte());
  * }
  * </pre>
  * <p/>
- * <h4>Writable bytes</h4>
+ * <h4>Writable bytes</h4>  可写字节区域
  * <p/>
+ * 这个部分是一个需要填充的未定义的空间. 任何以write开头的操作都将在writerIndex处写入数据，并且根据写入的字节数增加他。
+ * 如果写操作的参数也是ChannelBuffer，并且没有指定开始位置，那么这个buffer的readerIndex也会增加。
  * This segment is a undefined space which needs to be filled.  Any operation
  * whose name ends with {@code write} will write the data at the current {@link
  * #writerIndex() writerIndex} and increase it by the number of written bytes.
@@ -97,6 +112,9 @@ import java.nio.ByteBuffer;
  * no source index is specified, the specified buffer's {@link #readerIndex()
  * readerIndex} is increased together.
  * <p/>
+ *
+ *
+ * 如果没有足够的可写入空间剩余， 将抛出IndexOutOfBoundsException异常， 新创建Buffer的writerIndex为0， 包装、复制的buffer的writerIndex为capacity.
  * If there's not enough writable bytes left, {@link IndexOutOfBoundsException}
  * is raised.  The default value of newly allocated buffer's {@link
  * #writerIndex() writerIndex} is {@code 0}.  The default value of wrapped or
@@ -104,15 +122,16 @@ import java.nio.ByteBuffer;
  * capacity} of the buffer.
  * <p/>
  * <pre>
- * // Fills the writable bytes of a buffer with random integers.
+ * // Fills the writable bytes of a buffer with random integers.  使用随机数填充buffer的 writable bytes.
  * {@link ChannelBuffer} buffer = ...;
  * while (buffer.writableBytes() >= 4) {
  *     buffer.writeInt(random.nextInt());
  * }
  * </pre>
  * <p/>
- * <h4>Discardable bytes</h4>
+ * <h4>Discardable bytes</h4>    可丢失的bytes
  * <p/>
+ * 这个部分包含了已经被读取的bytes . 开始时， 这个部分的大小为0， 但是随着读取操作，这个大小会增加到 writerIndex. 调用discardReadBytes可以丢弃已经读取了的字节，从而回收没有用的区域。
  * This segment contains the bytes which were read already by a read operation.
  * Initially, the size of this segment is {@code 0}, but its size increases up
  * to the {@link #writerIndex() writerIndex} as read operations are executed.
@@ -138,13 +157,16 @@ import java.nio.ByteBuffer;
  * readerIndex (0) <= writerIndex (decreased)        <=        capacity
  * </pre>
  * <p/>
+ * 请记住， 无法保证调用discardReadBytes后writable bytes区域的内容。在大部分情况下，writable byte区域不会移动，甚至可能被填充完全不同的数据， 取决于buffer的实现。
  * Please note that there is no guarantee about the content of writable bytes
  * after calling {@link #discardReadBytes()}.  The writable bytes will not be
  * moved in most cases and could even be filled with completely different data
  * depending on the underlying buffer implementation.
  * <p/>
- * <h4>Clearing the buffer indexes</h4>
+ * <h4>Clearing the buffer indexes</h4>   清除buffer的索引
  * <p/>
+ *
+ * 你可以调用clear()同时设置readerIndex和writerIndex为0。 他不会清除buffer中的内容， 仅仅清除两个指针，注意，这个操作的作用不同于ByteBuffer.caler()
  * You can set both {@link #readerIndex() readerIndex} and {@link #writerIndex()
  * writerIndex} to {@code 0} by calling {@link #clear()}. It does not clear the
  * buffer content (e.g. filling with {@code 0}) but just clears the two
@@ -170,8 +192,9 @@ import java.nio.ByteBuffer;
  *      0 = readerIndex = writerIndex            <=            capacity
  * </pre>
  * <p/>
- * <h3>Mark and reset</h3>
+ * <h3>Mark and reset</h3>  标记和重置
  * <p/>
+ * 每个buffer都有两个标记index. 一个用来存储readerIndex, 另一个用于存 writerIndex, 你可以调用reset重置这两个中的一个。它和InputStream中的mark和reset的功能类似，除了他没有读限制。
  * There are two marker indexes in every buffer. One is for storing {@link
  * #readerIndex() readerIndex} and the other is for storing {@link
  * #writerIndex() writerIndex}.  You can always reposition one of the two
@@ -179,20 +202,21 @@ import java.nio.ByteBuffer;
  * and reset methods in {@link InputStream} except that there's no {@code
  * readlimit}.
  * <p/>
- * <h3>Conversion to existing JDK types</h3>
+ * <h3>Conversion to existing JDK types</h3>   转换为JDK中的类型
  * <p/>
  * <h4>Byte array</h4>
  * <p/>
+ * 如果ChannelBuffer需要变为 byte array. 可以直接调用array() . 判断一个buffer能否返回成 byte array， 可以使用 hasArray()
  * If a {@link ChannelBuffer} is backed by a byte array (i.e. {@code byte[]}),
  * you can access it directly via the {@link #array()} method.  To determine if
  * a buffer is backed by a byte array, {@link #hasArray()} should be used.
  * <p/>
  * <h4>NIO Buffers</h4>
  * <p/>
+ * toByteBuffer函数转变ChannelBuffer成一个或多个NIO buffer. 这些方法尽可能避免 buffer的分配和内存复制。但是不能保证不出现内存复制。
  * Various {@link #toByteBuffer()}  methods convert a {@link ChannelBuffer} into
  * one or more NIO buffers.  These methods avoid buffer allocation and memory
- * copy whenever possible, but there's no guarantee that memory copy will not be
- * involved.
+ * copy whenever possible, but there's no guarantee that memory copy will not be involved.
  * <p/>
  * <h4>I/O Streams</h4>
  * <p/>
