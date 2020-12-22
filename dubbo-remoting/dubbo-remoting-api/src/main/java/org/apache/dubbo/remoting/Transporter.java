@@ -22,6 +22,7 @@ import org.apache.dubbo.common.extension.SPI;
 
 /**
  * Transporter. (SPI, Singleton, ThreadSafe)
+ * 传输器
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Transport_Layer">Transport Layer</a>
  * <a href="http://en.wikipedia.org/wiki/Client%E2%80%93server_model">Client/Server</a>
@@ -33,7 +34,7 @@ public interface Transporter {
 
     /**
      * Bind a server.
-     *
+     * 绑定一个服务器
      * @param url     server url
      * @param handler
      * @return server
@@ -45,7 +46,7 @@ public interface Transporter {
 
     /**
      * Connect to a server.
-     *
+     * 连接一个服务器
      * @param url     server url
      * @param handler
      * @return client

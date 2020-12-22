@@ -29,13 +29,14 @@ public interface Dispatcher {
 
     /**
      * dispatch the message to threadpool.
-     *
+     * 分发消息到线程池中
      * @param handler
      * @param url
      * @return channel handler
      */
     @Adaptive({Constants.DISPATCHER_KEY, "dispather", "channel.handler"})
     // The last two parameters are reserved for compatibility with the old configuration
+    // 保留最后两个参数是为了和老的配置进行兼容
     ChannelHandler dispatch(ChannelHandler handler, URL url);
 
 }

@@ -71,7 +71,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
 
     private final ConcurrentMap<URL, ConcurrentMap<NotifyListener, ChildListener>> zkListeners = new ConcurrentHashMap<>();
 
-    private final ZookeeperClient zkClient;
+    private final ZookeeperClient zkClient;    // 使用dubbo-remoting-zookeeper与 zk进行通信
 
     public ZookeeperRegistry(URL url, ZookeeperTransporter zookeeperTransporter) {
         super(url);

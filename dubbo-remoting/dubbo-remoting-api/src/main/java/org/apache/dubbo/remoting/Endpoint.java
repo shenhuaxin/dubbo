@@ -53,7 +53,7 @@ public interface Endpoint {
 
     /**
      * send message.
-     *
+     * Channel 发送消息
      * @param message
      * @throws RemotingException
      */
