@@ -33,6 +33,7 @@ import java.util.concurrent.RejectedExecutionException;
 /**
  * Only request message will be dispatched to thread pool. Other messages like response, connect, disconnect,
  * heartbeat will be directly executed by I/O thread.
+ * 只有 Request 消息才会被分派到线程池中， 其他的信息，像 reponse, connect, disconnect, heartbeat 直接在IO线程中执行。
  */
 public class ExecutionChannelHandler extends WrappedChannelHandler {
 

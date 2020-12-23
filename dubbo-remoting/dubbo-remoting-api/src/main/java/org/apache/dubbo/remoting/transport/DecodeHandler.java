@@ -36,6 +36,10 @@ public class DecodeHandler extends AbstractChannelHandlerDelegate {
 
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
+        // 分为Request和Response两种类型。
+        // 1. DecodeableRpcInvocation -->  RpcInvocation   将inputstream转为RpcInvocation的各个变量
+        // 2. DecodeableRpcResult     -->  AppResponse     将inputstream转为AppResponse中的result
+        // 收到的消息， 需要解码， 将message中的InputStream中的数据， 放入message中的 result中.
         if (message instanceof Decodeable) {
             decode(message);
         }

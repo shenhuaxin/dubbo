@@ -36,6 +36,7 @@ public interface Constants {
     int DEFAULT_IDLE_TIMEOUT = 600 * 1000;
     /**
      * max size of channel. default value is zero that means unlimited.
+     * 连接的最大数量， 0 代表不做限制。
      */
     String ACCEPTS_KEY = "accepts";
 

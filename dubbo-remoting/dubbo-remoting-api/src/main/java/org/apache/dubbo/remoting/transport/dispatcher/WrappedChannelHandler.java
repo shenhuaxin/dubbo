@@ -127,7 +127,7 @@ public class WrappedChannelHandler implements ChannelHandlerDelegate {
 
     /**
      * get the shared executor for current Server or Client
-     *
+     * 为当前客户端/服务端  获取 共享的线程池， 根据端口共享。
      * @return
      */
     public ExecutorService getSharedExecutorService() {

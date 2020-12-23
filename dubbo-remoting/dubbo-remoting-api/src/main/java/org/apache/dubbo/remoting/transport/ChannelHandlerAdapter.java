@@ -21,6 +21,7 @@ import org.apache.dubbo.remoting.ChannelHandler;
 import org.apache.dubbo.remoting.RemotingException;
 
 /**
+ * 这个空实现有啥用？？ TODO
  * ChannelHandlerAdapter.
  */
 public class ChannelHandlerAdapter implements ChannelHandler {

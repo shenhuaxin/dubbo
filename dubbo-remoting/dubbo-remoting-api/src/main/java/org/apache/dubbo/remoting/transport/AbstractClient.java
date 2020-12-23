@@ -314,6 +314,7 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
         return getClass().getName() + " [" + getLocalAddress() + " -> " + getRemoteAddress() + "]";
     }
 
+    // 模板方法
     /**
      * Open client.
      *

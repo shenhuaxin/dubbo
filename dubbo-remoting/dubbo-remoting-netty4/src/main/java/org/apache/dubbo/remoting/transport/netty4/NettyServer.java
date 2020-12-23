@@ -74,6 +74,8 @@ public class NettyServer extends AbstractServer implements RemotingServer {
     public NettyServer(URL url, ChannelHandler handler) throws RemotingException {
         // you can customize name and type of client thread pool by THREAD_NAME_KEY and THREADPOOL_KEY in CommonConstants.
         // the handler will be wrapped: MultiMessageHandler->HeartbeatHandler->handler
+        // 可以自定义 线程池的名字和类型。
+        // 这个handler将被包装， MultiMessageHandler 包装 HeartBeatHandler 包装 handler .
         super(ExecutorUtil.setThreadName(url, SERVER_THREAD_POOL_NAME), ChannelHandlers.wrap(handler, url));
     }
 
@@ -110,10 +112,10 @@ public class NettyServer extends AbstractServer implements RemotingServer {
                                     SslHandlerInitializer.sslServerHandler(getUrl(), nettyServerHandler));
                         }
                         ch.pipeline()
-                                .addLast("decoder", adapter.getDecoder())
-                                .addLast("encoder", adapter.getEncoder())
-                                .addLast("server-idle-handler", new IdleStateHandler(0, 0, idleTimeout, MILLISECONDS))
-                                .addLast("handler", nettyServerHandler);
+                                .addLast("decoder", adapter.getDecoder())     // 进来的时候解码
+                                .addLast("encoder", adapter.getEncoder())     // 出去的时候编码
+                                .addLast("server-idle-handler", new IdleStateHandler(0, 0, idleTimeout, MILLISECONDS))    // 进来、出去都有效
+                                .addLast("handler", nettyServerHandler);     //  进来出去都管。
                     }
                 });
         // bind

@@ -50,7 +50,7 @@ public abstract class AbstractServer extends AbstractEndpoint implements Remotin
     ExecutorService executor;
     private InetSocketAddress localAddress;
     private InetSocketAddress bindAddress;
-    private int accepts;
+    private int accepts;    // 接收的请求数
     private int idleTimeout;
 
     private ExecutorRepository executorRepository = ExtensionLoader.getExtensionLoader(ExecutorRepository.class).getDefaultExtension();
@@ -65,7 +65,7 @@ public abstract class AbstractServer extends AbstractEndpoint implements Remotin
             bindIp = ANYHOST_VALUE;
         }
         bindAddress = new InetSocketAddress(bindIp, bindPort);
-        this.accepts = url.getParameter(ACCEPTS_KEY, DEFAULT_ACCEPTS);
+        this.accepts = url.getParameter(ACCEPTS_KEY, DEFAULT_ACCEPTS);   //默认无限制
         this.idleTimeout = url.getParameter(IDLE_TIMEOUT_KEY, DEFAULT_IDLE_TIMEOUT);
         try {
             doOpen();

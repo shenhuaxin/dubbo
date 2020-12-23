@@ -30,8 +30,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
+ * 这个 Executor 和 其他的Executor 最大的不同就是这个不会管理任何线程。
  * The most important difference between this Executor and other normal Executor is that this one doesn't manage
  * any thread.
+ *
+ * 提交给这个Executor处理的任务，不会得到一个线程执行， 这些任务都存储在一个阻塞队列中，只有被一个线程调用waitAndDrain才会执行，
+ * 一个线程执行这个任务和调用waitAndDrain一样。
  *
  * Tasks submitted to this executor through {@link #execute(Runnable)} will not get scheduled to a specific thread, though normal executors always do the schedule.
  * Those tasks are stored in a blocking queue and will only be executed when a thread calls {@link #waitAndDrain()}, the thread executing the task

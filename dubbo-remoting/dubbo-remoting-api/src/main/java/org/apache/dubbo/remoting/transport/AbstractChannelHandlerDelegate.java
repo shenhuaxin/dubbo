@@ -21,9 +21,10 @@ import org.apache.dubbo.remoting.Channel;
 import org.apache.dubbo.remoting.ChannelHandler;
 import org.apache.dubbo.remoting.RemotingException;
 
+
 public abstract class AbstractChannelHandlerDelegate implements ChannelHandlerDelegate {
 
-    protected ChannelHandler handler;
+    protected ChannelHandler handler;      // 委托给handler处理
 
     protected AbstractChannelHandlerDelegate(ChannelHandler handler) {
         Assert.notNull(handler, "handler == null");
@@ -32,7 +33,7 @@ public abstract class AbstractChannelHandlerDelegate implements ChannelHandlerDe
 
     @Override
     public ChannelHandler getHandler() {
-        if (handler instanceof ChannelHandlerDelegate) {
+        if (handler instanceof ChannelHandlerDelegate) {  // 如果还是一个Delegate, 继续从delegate中获取channelHandler
             return ((ChannelHandlerDelegate) handler).getHandler();
         }
         return handler;

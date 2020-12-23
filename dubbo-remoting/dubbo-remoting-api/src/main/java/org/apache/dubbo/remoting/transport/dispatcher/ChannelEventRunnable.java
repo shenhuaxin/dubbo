@@ -21,6 +21,9 @@ import org.apache.dubbo.common.logger.LoggerFactory;
 import org.apache.dubbo.remoting.Channel;
 import org.apache.dubbo.remoting.ChannelHandler;
 
+/**
+ * Channel中事件处理任务
+ */
 public class ChannelEventRunnable implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(ChannelEventRunnable.class);
 
@@ -52,6 +55,7 @@ public class ChannelEventRunnable implements Runnable {
 
     @Override
     public void run() {
+        // 根据不同的事件， 做不同的处理
         if (state == ChannelState.RECEIVED) {
             try {
                 handler.received(channel, message);

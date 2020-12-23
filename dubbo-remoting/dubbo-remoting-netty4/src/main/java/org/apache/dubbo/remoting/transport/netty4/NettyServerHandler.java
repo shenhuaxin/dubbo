@@ -47,7 +47,7 @@ public class NettyServerHandler extends ChannelDuplexHandler {
 
     private final URL url;
 
-    private final ChannelHandler handler;
+    private final ChannelHandler handler;    // 这个Netty的Handler的所有操作都委托给Dubbo的ChannelHandler
 
     public NettyServerHandler(URL url, ChannelHandler handler) {
         if (url == null) {
