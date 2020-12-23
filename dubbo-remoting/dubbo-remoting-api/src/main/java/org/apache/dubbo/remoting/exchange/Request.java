@@ -27,19 +27,22 @@ import static org.apache.dubbo.common.constants.CommonConstants.HEARTBEAT_EVENT;
  */
 public class Request {
 
+    // 用于生成请求的自增ID， 当递增到
     private static final AtomicLong INVOKE_ID = new AtomicLong(0);
 
-    private final long mId;
+    private final long mId;   // 请求的ID
 
-    private String mVersion;
+    private String mVersion;  // 请求的版本号
 
-    private boolean mTwoWay = true;
+    private boolean mTwoWay = true;    // 双向请求的标识， 为true标识，Server端收到请求后，需要给Client一个响应。
 
-    private boolean mEvent = false;
+    private boolean mEvent = false; // 事件标识，例如心跳请求、只读请求都有这个标识。
 
+    // 请求发送到Server之后，由Decoder将二进制解码成Request对象，
+    // 如果解码环节出现异常，则会设置该标识，然后交给其他ChannelHandler根据该标识进一步处理。
     private boolean mBroken = false;
 
-    private Object mData;
+    private Object mData;    // 请求数据
 
     public Request() {
         mId = newId();

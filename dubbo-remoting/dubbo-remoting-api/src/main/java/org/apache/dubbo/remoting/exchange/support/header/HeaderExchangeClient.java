@@ -42,6 +42,7 @@ import static org.apache.dubbo.remoting.utils.UrlUtils.getIdleTimeout;
 
 /**
  * DefaultMessageClient
+ * 有一个重连和心跳的任务
  */
 public class HeaderExchangeClient implements ExchangeClient {
 

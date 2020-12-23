@@ -48,7 +48,9 @@ import static org.apache.dubbo.remoting.utils.UrlUtils.getHeartbeat;
 import static org.apache.dubbo.remoting.utils.UrlUtils.getIdleTimeout;
 
 /**
+ * 与远程通信 委托给 RemotingServer实现。
  * ExchangeServerImpl
+ * 1. 有一个检查Channel空闲的task, 超过一定时长，就关闭Channel。
  */
 public class HeaderExchangeServer implements ExchangeServer {
 
@@ -60,7 +62,7 @@ public class HeaderExchangeServer implements ExchangeServer {
     private static final HashedWheelTimer IDLE_CHECK_TIMER = new HashedWheelTimer(new NamedThreadFactory("dubbo-server-idleCheck", true), 1,
             TimeUnit.SECONDS, TICKS_PER_WHEEL);
 
-    private CloseTimerTask closeTimerTask;
+    private CloseTimerTask closeTimerTask;      //
 
     public HeaderExchangeServer(RemotingServer server) {
         Assert.notNull(server, "server == null");

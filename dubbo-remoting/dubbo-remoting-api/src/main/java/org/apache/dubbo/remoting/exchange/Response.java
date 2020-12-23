@@ -78,17 +78,17 @@ public class Response {
      */
     public static final byte SERVER_THREADPOOL_EXHAUSTED_ERROR = 100;
 
-    private long mId = 0;
+    private long mId = 0;   // 响应ID ，  和请求ID一致
 
-    private String mVersion;
+    private String mVersion;  // 当前协议版本号， 与请求消息的版本号一致。
 
-    private byte mStatus = OK;
+    private byte mStatus = OK;  // 消息响应码
 
-    private boolean mEvent = false;
+    private boolean mEvent = false;  //
 
-    private String mErrorMsg;
+    private String mErrorMsg;     // 可读的错误响应信息
 
-    private Object mResult;
+    private Object mResult;      // 响应体
 
     public Response() {
     }
