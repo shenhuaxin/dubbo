@@ -83,7 +83,7 @@ public class NettyClient extends AbstractClient {
     }
 
     /**
-     * Init bootstrap
+     * Init bootstrap  初始化启动器
      *
      * @throws Throwable
      */
@@ -113,8 +113,8 @@ public class NettyClient extends AbstractClient {
                 ch.pipeline()//.addLast("logging",new LoggingHandler(LogLevel.INFO))//for debug
                         .addLast("decoder", adapter.getDecoder())
                         .addLast("encoder", adapter.getEncoder())
-                        .addLast("client-idle-handler", new IdleStateHandler(heartbeatInterval, 0, 0, MILLISECONDS))
-                        .addLast("handler", nettyClientHandler);
+                        .addLast("client-idle-handler", new IdleStateHandler(heartbeatInterval, 0, 0, MILLISECONDS))   // 空闲处理器
+                        .addLast("handler", nettyClientHandler);                                                       //
 
                 String socksProxyHost = ConfigUtils.getProperty(SOCKS_PROXY_HOST);
                 if(socksProxyHost != null) {

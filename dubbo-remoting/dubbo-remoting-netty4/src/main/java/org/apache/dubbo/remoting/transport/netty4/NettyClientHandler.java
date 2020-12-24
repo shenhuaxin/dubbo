@@ -34,6 +34,10 @@ import static org.apache.dubbo.common.constants.CommonConstants.HEARTBEAT_EVENT;
 
 /**
  * NettyClientHandler
+ *
+ * 在Netty的ChannelHandler中有一个Dubbo的ChannelHandler.
+ * 当Netty的Channel触发某个事件， 通知Netty的ChannelHandler, 再由 Netty的ChannelHandler通知 Dubbo的ChannelHandler.
+ *
  */
 @io.netty.channel.ChannelHandler.Sharable
 public class NettyClientHandler extends ChannelDuplexHandler {
@@ -56,7 +60,7 @@ public class NettyClientHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
+        NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);         // 根据Netty的Channel 获取  Dubbo的Channel
         handler.connected(channel);
         if (logger.isInfoEnabled()) {
             logger.info("The connection of " + channel.getLocalAddress() + " -> " + channel.getRemoteAddress() + " is established.");
