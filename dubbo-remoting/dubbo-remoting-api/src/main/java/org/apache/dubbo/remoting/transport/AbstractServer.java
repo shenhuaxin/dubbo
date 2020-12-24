@@ -42,6 +42,7 @@ import static org.apache.dubbo.remoting.Constants.IDLE_TIMEOUT_KEY;
 
 /**
  * AbstractServer
+ * 将一个Server通用的逻辑抽出来。 具体如何 open、close交给子类实现。
  */
 public abstract class AbstractServer extends AbstractEndpoint implements RemotingServer {
 

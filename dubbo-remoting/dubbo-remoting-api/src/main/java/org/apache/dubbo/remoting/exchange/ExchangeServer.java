@@ -22,20 +22,19 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 
 /**
+ * 继承了RemotingServer
  * ExchangeServer. (API/SPI, Prototype, ThreadSafe)
  */
 public interface ExchangeServer extends RemotingServer {
 
     /**
      * get channels.
-     *
      * @return channels
      */
     Collection<ExchangeChannel> getExchangeChannels();
 
     /**
      * get channel.
-     *
      * @param remoteAddress
      * @return channel
      */

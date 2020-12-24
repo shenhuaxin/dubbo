@@ -34,7 +34,7 @@ public interface Transporter {
 
     /**
      * Bind a server.
-     * 服务端
+     * 服务端（监听连接）    RemotingServer -> AbstractServer  ->  NettyServer
      * @param url     server url
      * @param handler
      * @return server
@@ -46,8 +46,8 @@ public interface Transporter {
 
     /**
      * Connect to a server.
-     * 连接服务端
-     * @param url     server url
+     * 客户端（发起连接）      Client  ->  AbstractClient  ->   NettyClient
+     * @param url
      * @param handler
      * @return client
      * @throws RemotingException

@@ -27,8 +27,11 @@ import org.apache.dubbo.remoting.exchange.support.Replier;
 import org.apache.dubbo.remoting.transport.ChannelHandlerAdapter;
 
 /**
- * Exchanger 门面
+ * Exchanger 的 门面
  * Exchanger facade. (API, Static, ThreadSafe)
+ *
+ * Exchangers --> Exchanger --> HeaderExchanger.bind     ->  HeaderExchangeServer  ->  Transporters.bind     ->  Transporter  -->  NettyTransporter.bind     -> NettyServer
+ * Exchangers --> Exchanger --> HeaderExchanger.connect  ->  HeaderExchangeClient  ->  Transporters.connect  ->  Transporter  -->  NettyTransporter.connect  -> NettyClient
  */
 public class Exchangers {
 

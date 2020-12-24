@@ -70,7 +70,7 @@ public class NettyClient extends AbstractClient {
      * replace this with new channel and close old channel.
      * <b>volatile, please copy reference to use.</b>
      */
-    private volatile Channel channel;
+    private volatile Channel channel;    // 在连接时赋值。
 
     /**
      * The constructor of NettyClient.

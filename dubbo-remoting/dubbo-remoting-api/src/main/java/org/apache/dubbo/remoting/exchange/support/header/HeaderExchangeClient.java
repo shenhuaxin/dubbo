@@ -46,7 +46,7 @@ import static org.apache.dubbo.remoting.utils.UrlUtils.getIdleTimeout;
  */
 public class HeaderExchangeClient implements ExchangeClient {
 
-    private final Client client;
+    private final Client client;         // 委托给下一层的Transport进行通信
     private final ExchangeChannel channel;
 
     private static final HashedWheelTimer IDLE_CHECK_TIMER = new HashedWheelTimer(

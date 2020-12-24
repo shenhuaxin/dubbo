@@ -24,6 +24,8 @@ import org.apache.dubbo.remoting.transport.ChannelHandlerDispatcher;
 
 /**
  * Transporter facade. (API, Static, ThreadSafe)
+ * 1. 使用SPI获取对应的Transport,  例如NettyTransport, 那么获得到的就是NettyServer、NettyClient
+ * 2. 只有在HeaderExchanger中使用。
  */
 public class Transporters {
 
