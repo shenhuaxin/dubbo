@@ -86,7 +86,7 @@ public abstract class AbstractTimerTask implements TimerTask {
             }
             doTask(channel);
         }
-        reput(timeout, tick);
+        reput(timeout, tick); // 执行完任务后，再把这个任务放入时间轮中。
     }
 
     protected abstract void doTask(Channel channel);

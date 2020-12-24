@@ -40,6 +40,7 @@ import static org.apache.dubbo.common.constants.CommonConstants.READONLY_EVENT;
 
 
 /**
+ * ExchangeHandler 包装器， 交给handler处理
  * ExchangeReceiver
  */
 public class HeaderExchangeHandler implements ChannelHandlerDelegate {
@@ -97,7 +98,7 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
         // find handler by message class.
         Object msg = req.getData();
         try {
-            CompletionStage<Object> future = handler.reply(channel, msg); // 异步处理消息
+            CompletionStage<Object> future = handler.reply(channel, msg); // 异步处理消息， 由上层决定如何处理消息，并返回结果。
             future.whenComplete((appResult, t) -> {  // appResult -> response , t -> throwable
                 try {
                     if (t == null) {
@@ -148,7 +149,7 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
         }
         if (message instanceof Request) {
             Request request = (Request) message;
-            DefaultFuture.sent(channel, request);
+            DefaultFuture.sent(channel, request);   // 记录请求的发送时间
         }
         if (exception != null) {
             if (exception instanceof RuntimeException) {

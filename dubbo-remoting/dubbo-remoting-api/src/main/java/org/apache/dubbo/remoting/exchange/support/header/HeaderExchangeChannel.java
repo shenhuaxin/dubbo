@@ -56,6 +56,7 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         this.channel = channel;
     }
 
+    // 向ch的attribute中添加并获取 HeaderExchangeChannel
     static HeaderExchangeChannel getOrAddChannel(Channel ch) {
         if (ch == null) {
             return null;
@@ -130,7 +131,7 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         req.setVersion(Version.getProtocolVersion());
         req.setTwoWay(true);
         req.setData(request);
-        DefaultFuture future = DefaultFuture.newFuture(channel, req, timeout, executor);
+        DefaultFuture future = DefaultFuture.newFuture(channel, req, timeout, executor);  // 异步，创建了一个超时检查任务，超时了就将Future设置为超时异常。
         try {
             channel.send(req);
         } catch (RemotingException e) {

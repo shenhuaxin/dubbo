@@ -210,9 +210,9 @@ public class ExchangeCodec extends TelnetCodec {
     protected void encodeRequest(Channel channel, ChannelBuffer buffer, Request req) throws IOException {
         Serialization serialization = getSerialization(channel);
         // header.
-        byte[] header = new byte[HEADER_LENGTH];
+        byte[] header = new byte[HEADER_LENGTH];    // 总共16个字节的头信息
         // set magic number.
-        Bytes.short2bytes(MAGIC, header);
+        Bytes.short2bytes(MAGIC, header);           // 2个字节的 magic header.
 
         // set request and serialization flag.
         header[2] = (byte) (FLAG_REQUEST | serialization.getContentTypeId());
@@ -221,11 +221,11 @@ public class ExchangeCodec extends TelnetCodec {
             header[2] |= FLAG_TWOWAY;
         }
         if (req.isEvent()) {
-            header[2] |= FLAG_EVENT;
+            header[2] |= FLAG_EVENT;                // 第三个字节，  第一位FLAG_REQUEST，第二位FLAG_TWOWAY， 第三位 FLAG_EVENT，  剩下的是 序列化ID
         }
 
         // set request id.
-        Bytes.long2bytes(req.getId(), header, 4);
+        Bytes.long2bytes(req.getId(), header, 4);   //  第5、6、7、8、9、10、11、12 的字节用于存储long类型的 请求ID
 
         // encode request data.
         int savedWriteIndex = buffer.writerIndex();
@@ -245,7 +245,7 @@ public class ExchangeCodec extends TelnetCodec {
         bos.close();
         int len = bos.writtenBytes();
         checkPayload(channel, len);
-        Bytes.int2bytes(len, header, 12);
+        Bytes.int2bytes(len, header, 12);   // 再用第13、14、15、16 四个字节用于存储 数据的长度。
 
         // write
         buffer.writerIndex(savedWriteIndex);
@@ -268,7 +268,7 @@ public class ExchangeCodec extends TelnetCodec {
             }
             // set response status.
             byte status = res.getStatus();
-            header[3] = status;
+            header[3] = status;                         // 第四个字节用于存储状态， 只有为Response生效， 所以在 encodeRequest 中生效，即第三个字节的第一位为0时生效， 因为在encodeRequest必为1.
             // set request id.
             Bytes.long2bytes(res.getId(), header, 4);
 
