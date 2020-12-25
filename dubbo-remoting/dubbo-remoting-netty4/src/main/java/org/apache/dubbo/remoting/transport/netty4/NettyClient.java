@@ -115,6 +115,8 @@ public class NettyClient extends AbstractClient {
                         .addLast("encoder", adapter.getEncoder())
                         .addLast("client-idle-handler", new IdleStateHandler(heartbeatInterval, 0, 0, MILLISECONDS))   // 空闲处理器
                         .addLast("handler", nettyClientHandler);                                                       //
+                // channel -> header -> decoder -> encoder -> client-idle-handler -> handler -> client                 // 对读入的消息进行处理
+                // channel <- header <- decoder <- encoder <- client-idle-handler <- handler <- client                 // 对写出的消息进行处理
 
                 String socksProxyHost = ConfigUtils.getProperty(SOCKS_PROXY_HOST);
                 if(socksProxyHost != null) {
