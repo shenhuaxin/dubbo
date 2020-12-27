@@ -30,13 +30,14 @@ import java.util.stream.Stream;
  */
 public interface Invocation {
 
+    // 目标Servcie的唯一标识。
     String getTargetServiceUniqueName();
 
     String getProtocolServiceKey();
 
     /**
      * get method name.
-     *
+     * 调用方法名
      * @return method name.
      * @serial
      */
@@ -44,6 +45,7 @@ public interface Invocation {
 
 
     /**
+     * 调用的服务名
      * get the interface name
      * @return
      */
@@ -51,7 +53,7 @@ public interface Invocation {
 
     /**
      * get parameter types.
-     *
+     * 参数类型
      * @return parameter types.
      * @serial
      */
@@ -70,7 +72,7 @@ public interface Invocation {
 
     /**
      * get arguments.
-     *
+     * 参数值
      * @return arguments.
      * @serial
      */
@@ -105,7 +107,7 @@ public interface Invocation {
 
     /**
      * get attachment by key.
-     *
+     * Invocation 携带一些 KV值， 传递给provider.
      * @return attachment value.
      * @serial
      */
@@ -137,5 +139,6 @@ public interface Invocation {
 
     Object get(Object key);
 
+    // Invoker可以设置一些KV值， 不传递给provider
     Map<Object, Object> getAttributes();
 }

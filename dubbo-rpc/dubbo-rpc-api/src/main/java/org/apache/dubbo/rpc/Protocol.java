@@ -31,7 +31,7 @@ public interface Protocol {
 
     /**
      * Get default port when user doesn't config the port.
-     *
+     * 获取默认端口
      * @return default port
      */
     int getDefaultPort();
@@ -44,6 +44,10 @@ public interface Protocol {
      * export the same URL<br>
      * 3. Invoker instance is passed in by the framework, protocol needs not to care <br>
      *
+     * 为远程调用暴露服务
+     * 1. Protocol应该在接收到请求之后记录请求源地址：  RpcContext.getContext().setRemoteAddress().
+     * 2. export() 必须是幂等的。即， 两次export相同的URL没有任何不同
+     * 3. Invoker实例被框架传递， protocol 不需要关心这个。
      * @param <T>     Service type
      * @param invoker Service invoker
      * @return exporter reference for exported service, useful for unexport the service later
@@ -61,6 +65,10 @@ public interface Protocol {
      * 3. When there's check=false set in URL, the implementation must not throw exception but try to recover when
      * connection fails.
      *
+     * 引用一个远程服务：
+     * 1. 当用户调用从refer方法返回的Invoker对象的invoker方法时。这个protocol需要对应的执行Invoker对象的invoker方法。
+     * 2. protocol的责任是实现从refer() 返回的 Invoker， 一般来说， protocol 发送远程请求在 Invoker的实现中。
+     * 3. 当URL中的check=false, 这个实现在连接失败时，不要抛出异常，而是尝试重试。
      * @param <T>  Service type
      * @param type Service class
      * @param url  URL address for the remote service
@@ -75,6 +83,11 @@ public interface Protocol {
      * 1. Cancel all services this protocol exports and refers <br>
      * 2. Release all occupied resources, for example: connection, port, etc. <br>
      * 3. Protocol can continue to export and refer new service even after it's destroyed.
+     *
+     * 销毁protocol:
+     * 1. 取消这个协议export和refer所有的service.
+     * 2. 释放所有占用的资源， 如： 连接，端口等。
+     * 3. 在destroy之后protocol可以继续export和refer新的service
      */
     void destroy();
 

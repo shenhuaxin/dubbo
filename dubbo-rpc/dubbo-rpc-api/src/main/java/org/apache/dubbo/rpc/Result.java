@@ -34,11 +34,15 @@ import java.util.function.Function;
  * (API, Prototype, NonThreadSafe)
  *
  * An RPC {@link Result}.
+ * RPC 调用的结果
  *
  * Known implementations are:
  * 1. {@link AsyncRpcResult}, it's a {@link CompletionStage} whose underlying value signifies the return value of an RPC call.
  * 2. {@link AppResponse}, it inevitably inherits {@link CompletionStage} and {@link Future}, but you should never treat AppResponse as a type of Future,
  *    instead, it is a normal concrete type.
+ *
+ * 1. AsyncRpcResult是一个 CompletionStage， RPC调用返回的值返回的就是一个CompletionStage。
+ * 2. AppResponse, 不可避免的继承了 CompletionStage 和 Future, 但你不要将其视为一个Future, 而是一个具体的类型。
  *
  * @serial Don't change the class name and package name.
  * @see org.apache.dubbo.rpc.Invoker#invoke(Invocation)
@@ -48,7 +52,7 @@ public interface Result extends Serializable {
 
     /**
      * Get invoke result.
-     *
+     * 获取调用结果
      * @return result. if no result return null.
      */
     Object getValue();
@@ -72,6 +76,7 @@ public interface Result extends Serializable {
     boolean hasException();
 
     /**
+     * 有了recreate ，不需要先判断是否有异常，再获取值了。
      * Recreate.
      * <p>
      * <code>

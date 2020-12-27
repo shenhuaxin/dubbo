@@ -20,6 +20,7 @@ import java.util.Collection;
 
 /**
  * Interface defining serialization optimizer, there are nothing implementations for now.
+ * 序列器优化器
  */
 public interface SerializationOptimizer {
 
