@@ -36,6 +36,7 @@ public class AtomicPositiveInteger extends Number {
     }
 
     public final int getAndIncrement() {
+        // 原生类型不会发生溢出， long 和 int 到达最大值后就会变成最小值， 所以这里 &  全1. 就保证了为正数。
         return INDEX_UPDATER.getAndIncrement(this) & Integer.MAX_VALUE;
     }
 

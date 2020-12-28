@@ -106,6 +106,7 @@ public abstract class AbstractProtocol implements Protocol {
     }
 
     // consumer端进行服务引用， 一个URL是一台机器， 一台机器可以创建多个连接。
+    // 异步转同步
     @Override
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
         return new AsyncToSyncInvoker<>(protocolBindingRefer(type, url));

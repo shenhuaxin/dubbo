@@ -55,6 +55,7 @@ import static org.apache.dubbo.rpc.Constants.TOKEN_KEY;
 
 /**
  * DubboInvoker
+ *
  */
 public class DubboInvoker<T> extends AbstractInvoker<T> {
 
@@ -66,7 +67,7 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
 
     private final ReentrantLock destroyLock = new ReentrantLock();
 
-    private final Set<Invoker<?>> invokers;
+    private final Set<Invoker<?>> invokers;  // 在销毁的时候需要从Protocol的invokers中移除。所以在这里持有一个引用。
 
     public DubboInvoker(Class<T> serviceType, URL url, ExchangeClient[] clients) {
         this(serviceType, url, clients, null);
@@ -87,6 +88,7 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
         inv.setAttachment(PATH_KEY, getUrl().getPath());
         inv.setAttachment(VERSION_KEY, version);
 
+        // 一个应用内的连接负载均衡
         ExchangeClient currentClient;
         if (clients.length == 1) {
             currentClient = clients[0];
@@ -97,11 +99,11 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
             boolean isOneway = RpcUtils.isOneway(getUrl(), invocation);
             int timeout = calculateTimeout(invocation, methodName);
             invocation.put(TIMEOUT_KEY, timeout);
-            if (isOneway) {
+            if (isOneway) {    // 无需响应
                 boolean isSent = getUrl().getMethodParameter(methodName, Constants.SENT_KEY, false);
                 currentClient.send(inv, isSent);
                 return AsyncRpcResult.newDefaultAsyncResult(invocation);
-            } else {
+            } else {          // request-response模型
                 ExecutorService executor = getCallbackExecutor(getUrl(), inv);
                 CompletableFuture<AppResponse> appResponseFuture =
                         currentClient.request(inv, timeout, executor).thenApply(obj -> (AppResponse) obj);

@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * This class will work as a wrapper wrapping outside of each protocol invoker.
- *
+ * 装饰器
  * @param <T>
  */
 public class AsyncToSyncInvoker<T> implements Invoker<T> {
@@ -57,6 +57,7 @@ public class AsyncToSyncInvoker<T> implements Invoker<T> {
                  * NOTICE!
                  * must call {@link java.util.concurrent.CompletableFuture#get(long, TimeUnit)} because
                  * {@link java.util.concurrent.CompletableFuture#get()} was proved to have serious performance drop.
+                 * 直接使用get有严重的性能下降。
                  */
                 asyncResult.get(Integer.MAX_VALUE, TimeUnit.MILLISECONDS);
             }

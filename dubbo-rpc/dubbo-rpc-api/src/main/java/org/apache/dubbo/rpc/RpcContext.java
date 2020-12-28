@@ -46,11 +46,17 @@ import static org.apache.dubbo.rpc.Constants.RETURN_KEY;
 
 /**
  * Thread local context. (API, ThreadLocal, ThreadSafe)
+ * 本地线程Context
  * <p>
  * Note: RpcContext is a temporary state holder. States in RpcContext changes every time when request is sent or received.
  * For example: A invokes B, then B invokes C. On service B, RpcContext saves invocation info from A to B before B
  * starts invoking C, and saves invocation info from B to C after B invokes C.
  *
+ * RpcContext 是一个临时的状态持有器。 每次请求的发送和接受都会改变RpcContext的States.
+ * 例如： A 调用 B. B 调用 C。
+ * 在服务B上，
+ * RpcContext在B调用C之前保存A调用B的调用信息，
+ * RpcContext在B调用C之后保存调用B调用C的调用信息。
  * @export
  * @see org.apache.dubbo.rpc.filter.ContextFilter
  */

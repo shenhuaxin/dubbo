@@ -28,16 +28,21 @@ import java.util.Set;
  * Internally, a {@link InternalThread} uses a constant index in an array, instead of using hash code and hash table,
  * to look for a variable.  Although seemingly very subtle, it yields slight performance advantage over using a hash
  * table, and it is useful when accessed frequently.
+ *
+ * ThreadLocal.get   -> 查找当前线程的ThreadLocalMap.  ->  根据ThreadLocal.index 从 ThreadLocalMap中 indexedVariables 获取 set的value。
+ *
  * <p></p>
  * This design is learning from {@see io.netty.util.concurrent.FastThreadLocal} which is in Netty.
  */
 public class InternalThreadLocal<V> {
 
+    // 变量所对应的下标
     private static final int VARIABLES_TO_REMOVE_INDEX = InternalThreadLocalMap.nextVariableIndex();
 
     private final int index;
 
     public InternalThreadLocal() {
+        //
         index = InternalThreadLocalMap.nextVariableIndex();
     }
 

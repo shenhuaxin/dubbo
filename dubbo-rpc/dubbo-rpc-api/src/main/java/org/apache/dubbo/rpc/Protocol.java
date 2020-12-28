@@ -52,6 +52,9 @@ public interface Protocol {
      * @param invoker Service invoker
      * @return exporter reference for exported service, useful for unexport the service later
      * @throws RpcException thrown when error occurs during export the service, for example: port is occupied
+     *
+     * 打开端口，准备接受消费端的调用。
+     * DubboProtocol中有一个requestHandler。 当接收到消息后，从exporterMap取出export出去的Invoker，使用这个Invoker进行调用。
      */
     @Adaptive
     <T> Exporter<T> export(Invoker<T> invoker) throws RpcException;
@@ -74,6 +77,8 @@ public interface Protocol {
      * @param url  URL address for the remote service
      * @return invoker service's local proxy
      * @throws RpcException when there's any error while connecting to the service provider
+     *
+     * refer自己需要的类。将创建的client连接封装为Invoker。这样调用invoker.invoke,就变成了对消费端发送请求。
      */
     @Adaptive
     <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException;

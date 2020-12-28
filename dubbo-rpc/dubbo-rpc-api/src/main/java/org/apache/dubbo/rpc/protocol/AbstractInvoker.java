@@ -46,6 +46,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This Invoker works on Consumer side.
+ *
+ * Invoker工作在Consumer端
  */
 public abstract class AbstractInvoker<T> implements Invoker<T> {
 

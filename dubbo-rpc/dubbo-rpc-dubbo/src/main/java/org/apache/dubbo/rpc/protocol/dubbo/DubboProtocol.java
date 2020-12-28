@@ -222,6 +222,7 @@ public class DubboProtocol extends AbstractProtocol {
         return INSTANCE;
     }
 
+    // 获取当前节点暴露的所有的服务
     @Override
     public Collection<Exporter<?>> getExporters() {
         return Collections.unmodifiableCollection(exporterMap.values());
@@ -284,7 +285,7 @@ public class DubboProtocol extends AbstractProtocol {
         URL url = invoker.getUrl();
 
         // export service.
-        String key = serviceKey(url);
+        String key = serviceKey(url);  // group/serverName:version:port
         DubboExporter<T> exporter = new DubboExporter<T>(invoker, key, exporterMap);   // 将Invoker封装为DubboExporter
         exporterMap.put(key, exporter);
 
@@ -405,6 +406,7 @@ public class DubboProtocol extends AbstractProtocol {
         optimizeSerialization(url);
 
         // create rpc invoker.
+        // 消费端调用提供端的Invoker. 可以创建多个连接。
         // 这里就将所有的客户端都封装成了一个 Invoker. (这里只是一台机器的多个连接)
         DubboInvoker<T> invoker = new DubboInvoker<T>(serviceType, url, getClients(url), invokers);
         invokers.add(invoker);

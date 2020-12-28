@@ -34,13 +34,17 @@ import static org.apache.dubbo.common.utils.ReflectUtils.defaultReturn;
 
 /**
  * This class represents an unfinished RPC call, it will hold some context information for this call, for example RpcContext and Invocation,
- * so that when the call finishes and the result returns, it can guarantee all the contexts being recovered as the same as when the call was made
- * before any callback is invoked.
+ * so that when the call finishes and the result returns, it can guarantee all the contexts being recovered as the same as when the call was made before any callback is invoked.
+ *
+ * 这个类代表了一个未结束的RPC调用，他将持有这次调用的一些上下文信息，例如 RpcContext 和 Invocation, 所以，当这次调用结束和返回结果，它能保证所有的context可以恢复到这次调用之前的上下文相同。
+ *
  * <p>
  * TODO if it's reasonable or even right to keep a reference to Invocation?
  * <p>
  * As {@link Result} implements CompletionStage, {@link AsyncRpcResult} allows you to easily build a async filter chain whose status will be
  * driven entirely by the state of the underlying RPC call.
+ *
+ *
  * <p>
  * AsyncRpcResult does not contain any concrete value (except the underlying value bring by CompletableFuture), consider it as a status transfer node.
  * {@link #getValue()} and {@link #getException()} are all inherited from {@link Result} interface, implementing them are mainly
