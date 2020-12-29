@@ -35,20 +35,21 @@ public interface Directory<T> extends Node {
 
     /**
      * get service type.
-     *
+     * 获取服务接口
      * @return service type.
      */
     Class<T> getInterface();
 
     /**
      * list invokers.
-     *
+     * 根据传入的Invocation, 返回符合条件的Invoker集合。
      * @return invokers
      */
     List<Invoker<T>> list(Invocation invocation) throws RpcException;
 
     List<Invoker<T>> getAllInvokers();
 
+    // 消费端的URL
     URL getConsumerUrl();
 
     boolean isDestroyed();

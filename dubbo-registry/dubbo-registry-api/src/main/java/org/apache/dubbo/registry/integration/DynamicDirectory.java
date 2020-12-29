@@ -77,10 +77,10 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
     protected volatile URL registeredConsumerUrl;
 
     /**
-     * override rules
-     * Priority: override>-D>consumer>provider
-     * Rule one: for a certain provider <ip:port,timeout=100>
-     * Rule two: for all providers <* ,timeout=5000>
+     * override rules         ： 覆盖规则
+     * Priority: override>-D>consumer>provider                优先级 ： override>-D>consumer>provider
+     * Rule one: for a certain provider <ip:port,timeout=100> 规则1： 对于一个确定的提供者 <ip:port,timeout=100>
+     * Rule two: for all providers <* ,timeout=5000>          规则2： 对于所有的提供者     <* ,timeout=5000>
      */
     protected volatile List<Configurator> configurators; // The initial value is null and the midway may be assigned to null, please use the local variable reference
 
@@ -94,13 +94,17 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
     protected ServiceInstancesChangedListener serviceListener;
 
     public DynamicDirectory(Class<T> serviceType, URL url) {
+        // 传入的url参数是注册中心的URL，
+        // 例如，zookeeper://127.0.0.1:2181/org.apache.dubbo.registry.RegistryService?...，
+        // 其中refer参数包含了Consumer信息，
+        // 例如，refer=application=dubbo-demo-api-consumer&dubbo=2.0.2&interface=org.apache.dubbo.demo.DemoService&pid=13423&register.ip=192.168.124.3&side=consumer(URLDecode之后的值)
         super(url);
         if (serviceType == null) {
             throw new IllegalArgumentException("service type is null.");
         }
 
         shouldRegister = !ANY_VALUE.equals(url.getServiceInterface()) && url.getParameter(REGISTER_KEY, true);
-        shouldSimplified = url.getParameter(SIMPLIFIED_KEY, false);
+        shouldSimplified = url.getParameter(SIMPLIFIED_KEY, false);              // URL简化
         if (url.getServiceKey() == null || url.getServiceKey().length() == 0) {
             throw new IllegalArgumentException("registry serviceKey is null.");
         }
@@ -108,7 +112,7 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
         this.serviceKey = super.getConsumerUrl().getServiceKey();
 
         String group = queryMap.get(GROUP_KEY) != null ? queryMap.get(GROUP_KEY) : "";
-        this.multiGroup = group != null && (ANY_VALUE.equals(group) || group.contains(","));
+        this.multiGroup = group != null && (ANY_VALUE.equals(group) || group.contains(","));     // group不为空，并且等于 * 或者包含 ,  (这些说明设置了分组)
     }
 
     @Override
@@ -134,7 +138,7 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
 
     public void subscribe(URL url) {
         setConsumerUrl(url);
-        registry.subscribe(url, this);
+        registry.subscribe(url, this);   //  完成订阅操作
     }
 
     public void unSubscribe(URL url) {
@@ -146,6 +150,7 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
     public List<Invoker<T>> doList(Invocation invocation) {
         if (forbidden) {
             // 1. No service provider 2. Service providers are disabled
+            // 1. 没有服务提供者       2. 服务提供者失效
             throw new RpcException(RpcException.FORBIDDEN_EXCEPTION, "No provider available from registry " +
                     getUrl().getAddress() + " for service " + getConsumerUrl().getServiceKey() + " on consumer " +
                     NetUtils.getLocalHost() + " use dubbo version " + Version.getVersion() +
