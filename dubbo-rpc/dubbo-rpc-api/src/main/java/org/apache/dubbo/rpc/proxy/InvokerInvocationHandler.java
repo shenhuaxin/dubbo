@@ -51,8 +51,8 @@ public class InvokerInvocationHandler implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if (method.getDeclaringClass() == Object.class) {
-            return method.invoke(invoker, args);
+        if (method.getDeclaringClass() == Object.class) {   // 当前方法所属的Class
+            return method.invoke(invoker, args);            // 如果是Object类的方法(未重写的方法)， 直接调用。
         }
         String methodName = method.getName();
         Class<?>[] parameterTypes = method.getParameterTypes();
