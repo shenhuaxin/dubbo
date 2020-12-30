@@ -30,6 +30,9 @@ import java.util.List;
  * <a href="http://en.wikipedia.org/wiki/Directory_service">Directory Service</a>
  *
  * @see org.apache.dubbo.rpc.cluster.Cluster#join(Directory)
+ *
+ * 目录服务是一个储存、组织和提供信息访问服务的软件系统，在软件工程中，一个目录是指一组名字和值的映射。
+ * 它允许根据一个给出的名字来查找对应的值，与词典相似。
  */
 public interface Directory<T> extends Node {
 

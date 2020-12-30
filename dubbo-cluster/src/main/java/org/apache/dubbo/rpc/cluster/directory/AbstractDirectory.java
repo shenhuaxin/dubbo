@@ -71,7 +71,7 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
         String path = queryMap.get(PATH_KEY);
         this.consumedProtocol = this.queryMap.get(PROTOCOL_KEY) == null ? DUBBO : this.queryMap.get(PROTOCOL_KEY);
         this.url = url.removeParameter(REFER_KEY).removeParameter(MONITOR_KEY);        // 删除refer和monitor
-        // 将这个URL修改protocol和path重新构造一个URL。
+        // 移除refer和monitor的url, 设置consumer协议和path。 再添加consumer的属性信息。 构造为consumerUrl
         this.consumerUrl = this.url.setProtocol(consumedProtocol).setPath(path == null ? queryMap.get(INTERFACE_KEY) : path).addParameters(queryMap)
                 .removeParameter(MONITOR_KEY);
 

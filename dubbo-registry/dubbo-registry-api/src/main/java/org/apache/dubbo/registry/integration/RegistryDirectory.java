@@ -146,16 +146,16 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
                 .filter(Objects::nonNull)
                 .filter(this::isValidCategory)
                 .filter(this::isNotCompatibleFor26x)
-                .collect(Collectors.groupingBy(this::judgeCategory));
+                .collect(Collectors.groupingBy(this::judgeCategory));  // 按照configurators、routers、providers进行分类
 
-        List<URL> configuratorURLs = categoryUrls.getOrDefault(CONFIGURATORS_CATEGORY, Collections.emptyList());
+        List<URL> configuratorURLs = categoryUrls.getOrDefault(CONFIGURATORS_CATEGORY, Collections.emptyList()); // 获取configurators分类
         this.configurators = Configurator.toConfigurators(configuratorURLs).orElse(this.configurators);
 
-        List<URL> routerURLs = categoryUrls.getOrDefault(ROUTERS_CATEGORY, Collections.emptyList());
+        List<URL> routerURLs = categoryUrls.getOrDefault(ROUTERS_CATEGORY, Collections.emptyList());             // 获取routers分类
         toRouters(routerURLs).ifPresent(this::addRouters);
 
         // providers
-        List<URL> providerURLs = categoryUrls.getOrDefault(PROVIDERS_CATEGORY, Collections.emptyList());
+        List<URL> providerURLs = categoryUrls.getOrDefault(PROVIDERS_CATEGORY, Collections.emptyList());         // 获取providers分类
         /**
          * 3.x added for extend URL address
          */
@@ -166,7 +166,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
                 providerURLs = addressListener.notify(providerURLs, getConsumerUrl(),this);
             }
         }
-        refreshOverrideAndInvoker(providerURLs);
+        refreshOverrideAndInvoker(providerURLs);        // 根据URL刷新provider的Invoker
     }
 
     private String judgeCategory(URL url) {
@@ -195,7 +195,10 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
      * <li>If the list of incoming invokerUrl is empty, It means that the rule is only a override rule or a route
      * rule, which needs to be re-contrasted to decide whether to re-reference.</li>
      * </ol>
-     *
+     * 将invokerURL集合转换到InvokerMap中， 转换的规则如下：
+     * <li>如果URL已经转换为Invoker了，它不再重新引用并且从cache中直接获取，注意，URL中的任何参数的改变都将会重新引用 </li>
+     * <li>如果传入的Invoker集合不是空的，这意味着这是最新的Invoker集合</li>
+     * <li>如果传入的Invoker集合是空的， 这意味着这只是一个override rule或route rule, 需要重新对比已决定是否重新引用</li>
      * @param invokerUrls this parameter can't be null
      */
     private void refreshInvoker(List<URL> invokerUrls) {
@@ -203,7 +206,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
 
         if (invokerUrls.size() == 1
                 && invokerUrls.get(0) != null
-                && EMPTY_PROTOCOL.equals(invokerUrls.get(0).getProtocol())) {
+                && EMPTY_PROTOCOL.equals(invokerUrls.get(0).getProtocol())) {  // 只有一个并且为Empty协议。 禁止访问，销毁所有的Invoker。（表示该服务的所有Provider都下线了）
             this.forbidden = true; // Forbid to access
             this.invokers = Collections.emptyList();
             routerChain.setInvokers(this.invokers);
@@ -215,14 +218,15 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
                 invokerUrls = new ArrayList<>();
             }
             if (invokerUrls.isEmpty() && this.cachedInvokerUrls != null) {
-                invokerUrls.addAll(this.cachedInvokerUrls);
+                invokerUrls.addAll(this.cachedInvokerUrls);   // 使用旧的URL
             } else {
-                this.cachedInvokerUrls = new HashSet<>();
+                this.cachedInvokerUrls = new HashSet<>();  // 旧的去掉，只留下新的。
                 this.cachedInvokerUrls.addAll(invokerUrls);//Cached invoker urls, convenient for comparison
             }
-            if (invokerUrls.isEmpty()) {
+            if (invokerUrls.isEmpty()) { //
                 return;
             }
+            // 将URL变为Invoker
             Map<URL, Invoker<T>> newUrlInvokerMap = toInvokers(invokerUrls);// Translate url list to Invoker map
 
             /**
@@ -232,6 +236,9 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
              *    eg: consumer protocol = dubbo, provider only has other protocol services(rest).
              * 2. The registration center is not robust and pushes illegal specification data.
              *
+             * 如果计算错了，则不进行处理。
+             * 1.  客户端的协议和服务端的协议不一致。如： consumer protocol = dubbo ,  provider protocol = rest
+             * 2.  注册中心不稳定，会推送不合法的规范数据。
              */
             if (CollectionUtils.isEmptyMap(newUrlInvokerMap)) {
                 logger.error(new IllegalStateException("urls to invokers error .invokerUrls.size :" + invokerUrls.size() + ", invoker.size :0. urls :" + invokerUrls
@@ -242,8 +249,10 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
             List<Invoker<T>> newInvokers = Collections.unmodifiableList(new ArrayList<>(newUrlInvokerMap.values()));
             // pre-route and build cache, notice that route cache should build on original Invoker list.
             // toMergeMethodInvokerMap() will wrap some invokers having different groups, those wrapped invokers not should be routed.
+            // 在路由和构建缓存之前， 注意： 路由缓存应该建立在原有的Invoker集合上。
+            // toMergeMethodInvokerMap 将包装不同分组的Invokers. 这些包装的invoker不应该route.
             routerChain.setInvokers(newInvokers);
-            this.invokers = multiGroup ? toMergeInvokerList(newInvokers) : newInvokers;
+            this.invokers = multiGroup ? toMergeInvokerList(newInvokers) : newInvokers;  // 相同分组的Invoker合并为一个Invoker
             this.urlInvokerMap = newUrlInvokerMap;
 
             try {
@@ -349,11 +358,13 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
             }
             URL url = mergeUrl(providerUrl);
 
-            if (keys.contains(url)) { // Repeated url
+            if (keys.contains(url)) { // Repeated url，  重复的url
                 continue;
             }
             keys.add(url);
-            // Cache key is url that does not merge with consumer side parameters, regardless of how the consumer combines parameters, if the server url changes, then refer again
+            // Cache key is url that does not merge with consumer side parameters,
+            // regardless of how the consumer combines parameters, if the server url changes, then refer again
+            // 缓存Key是一个不和consumer端参数合并的URL。 无论consumer如何组合参数， 如果服务端url改变，需要再次引用。
             Map<URL, Invoker<T>> localUrlInvokerMap = this.urlInvokerMap; // local reference
             Invoker<T> invoker = localUrlInvokerMap == null ? null : localUrlInvokerMap.get(url);
             if (invoker == null) { // Not in the cache, refer again
@@ -365,13 +376,14 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
                         enabled = url.getParameter(ENABLED_KEY, true);
                     }
                     if (enabled) {
+                        // refer某个服务，建立client连接，然后进行一下包装。
                         invoker = new InvokerDelegate<>(protocol.refer(serviceType, url), url, providerUrl);
                     }
                 } catch (Throwable t) {
                     logger.error("Failed to refer invoker for interface:" + serviceType + ",url:(" + url + ")" + t.getMessage(), t);
                 }
                 if (invoker != null) { // Put new invoker in cache
-                    newUrlInvokerMap.put(url, invoker);
+                    newUrlInvokerMap.put(url, invoker);            // 每一个URL都对应一个Invoker
                 }
             } else {
                 newUrlInvokerMap.put(url, invoker);
@@ -383,17 +395,27 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
 
     /**
      * Merge url parameters. the order is: override > -D >Consumer > Provider
-     *
+     * 合并URL参数， 顺序为：  override > -D > Consumer > Provider
      * @param providerUrl
      * @return
      */
     private URL mergeUrl(URL providerUrl) {
-        providerUrl = ClusterUtils.mergeProviderUrl(providerUrl, queryMap); // Merge the consumer side parameters
+        // 首先，移除Provider URL中只在Provider端生效的属性，例如，threadname、threadpool、corethreads、threads、queues等参数。
+        // 然后，用Consumer端的配置覆盖Provider URL的相应配置，其中，version、group、methods、timestamp等参数以Provider端的配置优先
+        // 最后，合并Provider端和Consumer端配置的Filter以及Listener
+        providerUrl = ClusterUtils.mergeProviderUrl(providerUrl, queryMap); // Merge the consumer side parameters  合并消费端的参数
 
+        // 合并configurators类型的URL，configurators类型的URL又分为三类：
+        // 第一类是注册中心Configurators目录下新增的URL(override协议)
+        // 第二类是通过ConsumerConfigurationListener监听器(监听应用级别的配置)得到的动态配置
+        // 第三类是通过ReferenceConfigurationListener监听器(监听服务级别的配置)得到的动态配置
+        // 这里只需要先了解：除了注册中心的configurators目录下有配置信息之外，还有可以在服务治理控制台动态添加配置，
+        // ConsumerConfigurationListener、ReferenceConfigurationListener监听器就是用来监听服务治理控制台的动态配置的
+        // 至于服务治理控制台的具体使用，在后面详细介绍
         providerUrl = overrideWithConfigurator(providerUrl);
-
-        providerUrl = providerUrl.addParameter(Constants.CHECK_KEY, String.valueOf(false)); // Do not check whether the connection is successful or not, always create Invoker!
-
+        // Do not check whether the connection is successful or not, always create Invoker!
+        // 不要检查连接是否成功， 总是创建Invoker, 增加check=false
+        providerUrl = providerUrl.addParameter(Constants.CHECK_KEY, String.valueOf(false));
         if ((providerUrl.getPath() == null || providerUrl.getPath()
                 .length() == 0) && DUBBO_PROTOCOL.equals(providerUrl.getProtocol())) { // Compatible version 1.0
             //fix by tony.chenl DUBBO-44
@@ -599,6 +621,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
 
     private void overrideConsumerUrl() {
         // merge override parameters
+        // 合并重写后的参数
         this.overrideConsumerUrl = getConsumerUrl();
         if (overrideConsumerUrl != null) {
             List<Configurator> localConfigurators = this.configurators; // local reference
@@ -621,8 +644,10 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
     }
 
     /**
-     * The delegate class, which is mainly used to store the URL address sent by the registry,and can be reassembled on the basis of providerURL queryMap overrideMap for re-refer.
-     *
+     * The delegate class, which is mainly used to store the URL address sent by the registry,
+     * and can be reassembled on the basis of providerURL queryMap overrideMap for re-refer.
+     * 委托类：
+     * 主要用于保存注册中心发送的地址，并且可以在重新引用的时候重新组装 providerurl queryMap overrideMap。
      * @param <T>
      */
     private static class InvokerDelegate<T> extends InvokerWrapper<T> {

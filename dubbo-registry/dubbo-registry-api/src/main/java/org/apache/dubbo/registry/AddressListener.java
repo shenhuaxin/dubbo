@@ -27,7 +27,7 @@ public interface AddressListener {
 
     /**
      * processing when receiving the address list
-     *
+     * 监听器： 当接受到地址信息的时候处理。
      * @param addresses            provider address list
      * @param consumerUrl
      * @param registryDirectory

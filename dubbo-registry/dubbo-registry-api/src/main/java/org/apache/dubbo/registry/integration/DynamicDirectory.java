@@ -63,10 +63,15 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
     protected static final RouterFactory ROUTER_FACTORY = ExtensionLoader.getExtensionLoader(RouterFactory.class)
             .getAdaptiveExtension();
 
+    // 服务对应的 ServiceKey,  默认为 {interface}:[group]:[version] 三部分构成
     protected final String serviceKey; // Initialization at construction time, assertion not null
+    // 服务接口类型，例如，org.apache.dubbo.demo.DemoService。
     protected final Class<T> serviceType; // Initialization at construction time, assertion not null
+    // 是否引用多个服务组
     protected final boolean multiGroup;
+    // 使用的protocol
     protected Protocol protocol; // Initialization at the time of injection, the assertion is not null
+    // 使用的注册中心实现
     protected Registry registry; // Initialization at the time of injection, the assertion is not null
     protected volatile boolean forbidden = false;
     protected boolean shouldRegister;
@@ -77,18 +82,22 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
     protected volatile URL registeredConsumerUrl;
 
     /**
+     * 动态更新的配置信息
      * override rules         ： 覆盖规则
-     * Priority: override>-D>consumer>provider                优先级 ： override>-D>consumer>provider
+     * Priority: override>-D>consumer>provider                优先级： override>-D>consumer>provider
      * Rule one: for a certain provider <ip:port,timeout=100> 规则1： 对于一个确定的提供者 <ip:port,timeout=100>
      * Rule two: for all providers <* ,timeout=5000>          规则2： 对于所有的提供者     <* ,timeout=5000>
      */
     protected volatile List<Configurator> configurators; // The initial value is null and the midway may be assigned to null, please use the local variable reference
 
     // Map<url, Invoker> cache service url to invoker mapping.
+    // provider url 和 Invoker的映射， 和 invokers 同时更新。
     protected volatile Map<URL, Invoker<T>> urlInvokerMap; // The initial value is null and the midway may be assigned to null, please use the local variable reference
+    // 动态更新的 Invoker 集合。
     protected volatile List<Invoker<T>> invokers;
 
     // Set<invokerUrls> cache invokeUrls to invokers mapping.
+    // 缓存所有的provider url
     protected volatile Set<URL> cachedInvokerUrls; // The initial value is null and the midway may be assigned to null, please use the local variable reference
 
     protected ServiceInstancesChangedListener serviceListener;
@@ -109,7 +118,7 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
             throw new IllegalArgumentException("registry serviceKey is null.");
         }
         this.serviceType = serviceType;
-        this.serviceKey = super.getConsumerUrl().getServiceKey();
+        this.serviceKey = super.getConsumerUrl().getServiceKey();   // 要消费的服务
 
         String group = queryMap.get(GROUP_KEY) != null ? queryMap.get(GROUP_KEY) : "";
         this.multiGroup = group != null && (ANY_VALUE.equals(group) || group.contains(","));     // group不为空，并且等于 * 或者包含 ,  (这些说明设置了分组)
@@ -151,19 +160,21 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
         if (forbidden) {
             // 1. No service provider 2. Service providers are disabled
             // 1. 没有服务提供者       2. 服务提供者失效
+            // no provider avaliable from registry 127.0.0.1 for service ${service} on consumer 127.0.0.1:8080 use dubbo version 2.7.3.
             throw new RpcException(RpcException.FORBIDDEN_EXCEPTION, "No provider available from registry " +
                     getUrl().getAddress() + " for service " + getConsumerUrl().getServiceKey() + " on consumer " +
                     NetUtils.getLocalHost() + " use dubbo version " + Version.getVersion() +
                     ", please check status of providers(disabled, not registered or in blacklist).");
         }
 
-        if (multiGroup) {
+        if (multiGroup) {   // 设置了分组，直接返回。
             return this.invokers == null ? Collections.emptyList() : this.invokers;
         }
 
         List<Invoker<T>> invokers = null;
         try {
             // Get invokers from cache, only runtime routers will be executed.
+            // 交给router进行过滤
             invokers = routerChain.route(getConsumerUrl(), invocation);
         } catch (Throwable t) {
             logger.error("Failed to execute router: " + getUrl() + ", cause: " + t.getMessage(), t);
