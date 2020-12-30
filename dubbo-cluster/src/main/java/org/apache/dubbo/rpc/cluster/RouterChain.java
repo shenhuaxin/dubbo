@@ -33,13 +33,16 @@ import java.util.stream.Collectors;
 public class RouterChain<T> {
 
     // full list of addresses from registry, classified by method name.
+    // 从注册中心中获取的所有地址列表。 由方法名分类。
     private List<Invoker<T>> invokers = Collections.emptyList();
 
     // containing all routers, reconstruct every time 'route://' urls change.
+    // 包含所有的router, 每次 route://  url变化时重构。
     private volatile List<Router> routers = Collections.emptyList();
 
     // Fixed router instances: ConfigConditionRouter, TagRouter, e.g., the rule for each instance may change but the
     // instance will never delete or recreate.
+    // 修改router实例：  ConfigConditionRouter, TagRouter， 每个实例的规则可能会改变，但是实例不会删除或重建。
     private List<Router> builtinRouters = Collections.emptyList();
 
     public static <T> RouterChain<T> buildChain(URL url) {
@@ -72,6 +75,9 @@ public class RouterChain<T> {
      * keep the routers up to date, that is, each time router URLs changes, we should update the routers list, only
      * keep the builtinRouters which are available all the time and the latest notified routers which are generated
      * from URLs.
+     *
+     * 在2.7.0版本之前，如果我们使用 route:// 协议， 每个URL将会生成一个Router实例， 所以我们应该保持最新的routers。 也就是，
+     * 每次Router url变化。我们应该更新routers列表，仅保持一直可用的builtinRouters 和 从Url中生成的最后通知的routers.
      *
      * @param routers routers from 'router://' rules in 2.6.x or before.
      */
