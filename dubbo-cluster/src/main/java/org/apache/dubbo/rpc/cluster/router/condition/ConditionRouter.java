@@ -51,11 +51,15 @@ import static org.apache.dubbo.rpc.cluster.Constants.RUNTIME_KEY;
 /**
  * ConditionRouter
  * 条件路由规则
+ * 更多规则见： http://dubbo.apache.org/zh/docs/v2.7/user/examples/routing-rule-deprecated/#%E6%9D%A1%E4%BB%B6%E8%B7%AF%E7%94%B1%E8%A7%84%E5%88%99
  */
 public class ConditionRouter extends AbstractRouter {
     public static final String NAME = "condition";
 
     private static final Logger logger = LoggerFactory.getLogger(ConditionRouter.class);
+    // 以&!=, 开头，然后以空格为分割（也可以不要）， 最后的字符不要&!=,和空格。  也就是 != 127.0.0.1 或者 &127.0.0.1。
+    // 也就是获取  =、!=、&  后面的ip。
+    // 更多规则见： http://dubbo.apache.org/zh/docs/v2.7/user/examples/routing-rule-deprecated/#%E6%9D%A1%E4%BB%B6%E8%B7%AF%E7%94%B1%E8%A7%84%E5%88%99
     protected static final Pattern ROUTE_PATTERN = Pattern.compile("([&!=,]*)\\s*([^&!=,\\s]+)");
     protected Map<String, MatchPair> whenCondition;
     protected Map<String, MatchPair> thenCondition;
@@ -85,7 +89,9 @@ public class ConditionRouter extends AbstractRouter {
             int i = rule.indexOf("=>");
             String whenRule = i < 0 ? null : rule.substring(0, i).trim();
             String thenRule = i < 0 ? rule.trim() : rule.substring(i + 2).trim();
+            // 如果 => 前为空，或者为 true , 表示匹配所有消费者应用， 否则解析规则。
             Map<String, MatchPair> when = StringUtils.isBlank(whenRule) || "true".equals(whenRule) ? new HashMap<String, MatchPair>() : parseRule(whenRule);
+            // 如果 => 后为空，或者为false,  表示禁用。 否则解析规则。
             Map<String, MatchPair> then = StringUtils.isBlank(thenRule) || "false".equals(thenRule) ? null : parseRule(thenRule);
             // NOTE: It should be determined on the business level whether the `When condition` can be empty or not.
             this.whenCondition = when;
@@ -165,6 +171,14 @@ public class ConditionRouter extends AbstractRouter {
         return condition;
     }
 
+    /**
+     * 基于条件表达式的路由规则，如：host = 10.20.153.10 => host = 10.20.153.11
+     * 规则：
+     * => 之前的为消费者匹配条件，所有参数和消费者的 URL 进行对比，当消费者满足匹配条件时，对该消费者执行后面的过滤规则。
+     * => 之后为提供者地址列表的过滤条件，所有参数和提供者的 URL 进行对比，消费者最终只拿到过滤后的地址列表。
+     * 如果匹配条件为空，表示对所有消费方应用，如：=> host != 10.20.153.11
+     * 如果过滤条件为空，表示禁止访问，如：host = 10.20.153.10 =>
+     */
     @Override
     public <T> List<Invoker<T>> route(List<Invoker<T>> invokers, URL url, Invocation invocation)
             throws RpcException {
@@ -176,16 +190,16 @@ public class ConditionRouter extends AbstractRouter {
             return invokers;
         }
         try {
-            if (!matchWhen(url, invocation)) {
+            if (!matchWhen(url, invocation)) {            // 匹配不上，就返回所有Invoker
                 return invokers;
             }
             List<Invoker<T>> result = new ArrayList<Invoker<T>>();
-            if (thenCondition == null) {
+            if (thenCondition == null) {                  //  如果过滤条件为空，表示禁止访问，如：host = 10.20.153.10 =>
                 logger.warn("The current consumer in the service blacklist. consumer: " + NetUtils.getLocalHost() + ", service: " + url.getServiceKey());
                 return result;
             }
             for (Invoker<T> invoker : invokers) {
-                if (matchThen(invoker.getUrl(), url)) {
+                if (matchThen(invoker.getUrl(), url)) {   // 消费应用匹配上了， 匹配提供者应用。
                     result.add(invoker);
                 }
             }
@@ -214,10 +228,12 @@ public class ConditionRouter extends AbstractRouter {
     }
 
     boolean matchWhen(URL url, Invocation invocation) {
+        // 如果匹配条件为空，表示对所有消费方应用，如：=> host != 10.20.153.11
         return CollectionUtils.isEmptyMap(whenCondition) || matchCondition(whenCondition, url, null, invocation);
     }
 
     private boolean matchThen(URL url, URL param) {
+        // 不为空并且能匹配上。  为空表示禁用。
         return CollectionUtils.isNotEmptyMap(thenCondition) && matchCondition(thenCondition, url, param, null);
     }
 
