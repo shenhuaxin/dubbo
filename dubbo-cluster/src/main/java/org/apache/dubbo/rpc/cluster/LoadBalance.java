@@ -38,7 +38,7 @@ public interface LoadBalance {
 
     /**
      * select one invoker in list.
-     *
+     * 从Invoker集合中选择一个。
      * @param invokers   invokers.
      * @param url        refer url
      * @param invocation invocation.

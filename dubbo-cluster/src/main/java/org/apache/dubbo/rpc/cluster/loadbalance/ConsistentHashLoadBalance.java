@@ -51,13 +51,13 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
     @Override
     protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {
         String methodName = RpcUtils.getMethodName(invocation);
-        String key = invokers.get(0).getUrl().getServiceKey() + "." + methodName;
+        String key = invokers.get(0).getUrl().getServiceKey() + "." + methodName;   // 调用服务的方法名
         // using the hashcode of list to compute the hash only pay attention to the elements in the list
         int invokersHashCode = invokers.hashCode();
         ConsistentHashSelector<T> selector = (ConsistentHashSelector<T>) selectors.get(key);
         if (selector == null || selector.identityHashCode != invokersHashCode) {
-            selectors.put(key, new ConsistentHashSelector<T>(invokers, methodName, invokersHashCode));
-            selector = (ConsistentHashSelector<T>) selectors.get(key);
+            selectors.put(key, new ConsistentHashSelector<T>(invokers, methodName, invokersHashCode));         // 如果没有， 则设置一个selector
+            selector = (ConsistentHashSelector<T>) selectors.get(key);                                         //
         }
         return selector.select(invocation);
     }
@@ -75,8 +75,8 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
         ConsistentHashSelector(List<Invoker<T>> invokers, String methodName, int identityHashCode) {
             this.virtualInvokers = new TreeMap<Long, Invoker<T>>();
             this.identityHashCode = identityHashCode;
-            URL url = invokers.get(0).getUrl();
-            this.replicaNumber = url.getMethodParameter(methodName, HASH_NODES, 160);
+            URL url = invokers.get(0).getUrl();             // 调用服务的URL。
+            this.replicaNumber = url.getMethodParameter(methodName, HASH_NODES, 160);    //
             String[] index = COMMA_SPLIT_PATTERN.split(url.getMethodParameter(methodName, HASH_ARGUMENTS, "0"));
             argumentIndex = new int[index.length];
             for (int i = 0; i < index.length; i++) {
