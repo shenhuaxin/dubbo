@@ -52,6 +52,7 @@ public abstract class AbstractServiceConfig extends AbstractInterfaceConfig {
 
     /**
      * The time delay register service (milliseconds)
+     * 延迟暴露：  <dubbo:service delay="5000" />
      */
     protected Integer delay;
 
@@ -90,6 +91,7 @@ public abstract class AbstractServiceConfig extends AbstractInterfaceConfig {
     /**
      * The protocol list the service will export with
      * Also see {@link #protocolIds}, only one of them will work.
+     * 如果需要支持多协议，可以声明多个 <dubbo:protocol> 标签，并在 <dubbo:service> 中通过 protocol 属性指定使用的协议。
      */
     protected List<ProtocolConfig> protocols;
 

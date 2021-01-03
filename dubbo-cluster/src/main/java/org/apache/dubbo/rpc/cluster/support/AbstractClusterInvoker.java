@@ -126,7 +126,9 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
      * b) Reselection, the validation rule for reselection: selected > available. This rule guarantees that
      * the selected invoker has the minimum chance to be one in the previously selected list, and also
      * guarantees this invoker is available.
-     *
+     * 使用loadbalance策略选择一个invoker,
+     * 1. 第一步，使用loadbalance选择一个invoker, 如果这个invoker在之前的选择列表中，或者这个invoker不可用，进行 第二步， 否则直接返回第一个选择的invoker.
+     * 2. 重新选择阶段，重新选择的验证规则， selected > available , 这个规则保障已经这个invoker进入上一个选择列表的机会最小，并且保证这个invoker可用。
      * @param loadbalance load balance policy
      * @param invocation  invocation
      * @param invokers    invoker candidates
@@ -173,13 +175,13 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
         if (invokers.size() == 1) {
             return invokers.get(0);
         }
-        Invoker<T> invoker = loadbalance.select(invokers, getUrl(), invocation);
+        Invoker<T> invoker = loadbalance.select(invokers, getUrl(), invocation);       // 使用loadBalance选一个Invoker
 
         //If the `invoker` is in the  `selected` or invoker is unavailable && availablecheck is true, reselect.
         if ((selected != null && selected.contains(invoker))
-                || (!invoker.isAvailable() && getUrl() != null && availablecheck)) {
+                || (!invoker.isAvailable() && getUrl() != null && availablecheck)) {         // invoker已在选择列表中，或者invoker不可用并且availablecheck=true, 重新选择。
             try {
-                Invoker<T> rInvoker = reselect(loadbalance, invocation, invokers, selected, availablecheck);
+                Invoker<T> rInvoker = reselect(loadbalance, invocation, invokers, selected, availablecheck);   // 重新选择。
                 if (rInvoker != null) {
                     invoker = rInvoker;
                 } else {
@@ -259,10 +261,10 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
             ((RpcInvocation) invocation).addObjectAttachments(contextAttachments);
         }
 
-        List<Invoker<T>> invokers = list(invocation);
-        LoadBalance loadbalance = initLoadBalance(invokers, invocation);
-        RpcUtils.attachInvocationIdIfAsync(getUrl(), invocation);
-        return doInvoke(invocation, invokers, loadbalance);
+        List<Invoker<T>> invokers = list(invocation);                      // 列出所有的Invoker
+        LoadBalance loadbalance = initLoadBalance(invokers, invocation);   // 初始化LoadBalance
+        RpcUtils.attachInvocationIdIfAsync(getUrl(), invocation);          // 在请求中添加唯一ID
+        return doInvoke(invocation, invokers, loadbalance);                //
     }
 
     protected void checkWhetherDestroyed() {
@@ -298,10 +300,12 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
     }
 
     /**
-     * Init LoadBalance.
+     * Init LoadBalance.    初始化LoadBalance
      * <p>
      * if invokers is not empty, init from the first invoke's url and invocation
      * if invokes is empty, init a default LoadBalance(RandomLoadBalance)
+     * 如果invokers不为空， 根据第一个invoker的url中的参数初始化LoadBalance.
+     * 如果invokers为空，初始化默认的LoadBalance（RandomBalance）
      * </p>
      *
      * @param invokers   invokers

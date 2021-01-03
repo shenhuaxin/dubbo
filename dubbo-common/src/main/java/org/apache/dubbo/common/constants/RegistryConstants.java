@@ -29,7 +29,7 @@ public interface RegistryConstants {
 
     String REGISTRY_PROTOCOL = "registry";
 
-    String DYNAMIC_KEY = "dynamic";
+    String DYNAMIC_KEY = "dynamic";       // 服务是否动态注册，如果设为false，注册后将显示为disable状态，需人工启用，并且服务提供者停止时，也不会自动取消注册，需人工禁用。
 
     String CATEGORY_KEY = "category";
 

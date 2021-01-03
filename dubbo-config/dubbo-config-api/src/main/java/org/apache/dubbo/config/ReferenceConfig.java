@@ -226,13 +226,13 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         dispatch(new ReferenceConfigDestroyedEvent(this));
     }
 
-    public synchronized void init() {
+    public synchronized void init() {         // 加锁
         if (initialized) {
             return;
         }
 
 
-        if (bootstrap == null) {
+        if (bootstrap == null) {       // 检测DubboBootstrap的初始化状态
             bootstrap = DubboBootstrap.getInstance();
             bootstrap.initialize();
         }
@@ -302,7 +302,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
         serviceMetadata.getAttachments().putAll(map);
 
-        ref = createProxy(map);
+        ref = createProxy(map);            // 创建代理
 
         serviceMetadata.setTarget(ref);
         serviceMetadata.addAttribute(PROXY_CLASS_REF, ref);
@@ -320,15 +320,17 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
     @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
     private T createProxy(Map<String, String> map) {
+        // TODO 阅读到这里了，
         if (shouldJvmRefer(map)) {
             URL url = new URL(LOCAL_PROTOCOL, LOCALHOST_VALUE, 0, interfaceClass.getName()).addParameters(map);
-            invoker = REF_PROTOCOL.refer(interfaceClass, url);
+            invoker = REF_PROTOCOL.refer(interfaceClass, url);          // 使用InjvmProtocol引用服务。
             if (logger.isInfoEnabled()) {
                 logger.info("Using injvm service " + interfaceClass.getName());
             }
         } else {
             urls.clear();
             if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
+                //  用户指定了URL, 可以是直连，或者是注册中心地址。（reference中指定的url或register??） dubbo://localhost:20880    registry://zookeeper://127.0.0.1:2181。
                 String[] us = SEMICOLON_SPLIT_PATTERN.split(url);
                 if (us != null && us.length > 0) {
                     for (String u : us) {
@@ -336,7 +338,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                         if (StringUtils.isEmpty(url.getPath())) {
                             url = url.setPath(interfaceName);
                         }
-                        if (UrlUtils.isRegistry(url)) {
+                        if (UrlUtils.isRegistry(url)) {        // 如果是个注册中心地址
                             urls.add(url.addParameterAndEncoded(REFER_KEY, StringUtils.toQueryString(map)));
                         } else {
                             urls.add(ClusterUtils.mergeUrl(url, map));
@@ -347,7 +349,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                 // if protocols not injvm checkRegistry
                 if (!LOCAL_PROTOCOL.equalsIgnoreCase(getProtocol())) {
                     checkRegistry();
-                    List<URL> us = ConfigValidationUtils.loadRegistries(this, false);
+                    List<URL> us = ConfigValidationUtils.loadRegistries(this, false);      // 加载注册中心地址
                     if (CollectionUtils.isNotEmpty(us)) {
                         for (URL u : us) {
                             URL monitorUrl = ConfigValidationUtils.loadMonitor(this, u);
@@ -369,21 +371,22 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                 List<Invoker<?>> invokers = new ArrayList<Invoker<?>>();
                 URL registryURL = null;
                 for (URL url : urls) {
-                    invokers.add(REF_PROTOCOL.refer(interfaceClass, url));
+                    invokers.add(REF_PROTOCOL.refer(interfaceClass, url));       // 使用Protocol引用服务。是什么类型的Protocol，根据URL的参数。
                     if (UrlUtils.isRegistry(url)) {
                         registryURL = url; // use last registry url
                     }
                 }
-                if (registryURL != null) { // registry url is available
+                if (registryURL != null) { // registry url is available      存在注册中心
                     // for multi-subscription scenario, use 'zone-aware' policy by default
                     String cluster = registryURL.getParameter(CLUSTER_KEY, ZoneAwareCluster.NAME);
                     // The invoker wrap sequence would be: ZoneAwareClusterInvoker(StaticDirectory) -> FailoverClusterInvoker(RegistryDirectory, routing happens here) -> Invoker
+                    // 这个invoker包装顺序为： ZoneAwareClusterInvoker(StaticDirectory)   —>  FailoverClusterInvoker(RegistryDirectory, 路由发生在这里)  -> Invoker
                     invoker = Cluster.getCluster(cluster, false).join(new StaticDirectory(registryURL, invokers));
-                } else { // not a registry url, must be direct invoke.
+                } else { // not a registry url, must be direct invoke.      不存在注册中心，肯定是直连调用。
                     String cluster = CollectionUtils.isNotEmpty(invokers)
                             ? (invokers.get(0).getUrl() != null ? invokers.get(0).getUrl().getParameter(CLUSTER_KEY, ZoneAwareCluster.NAME) : Cluster.DEFAULT)
                             : Cluster.DEFAULT;
-                    invoker = Cluster.getCluster(cluster).join(new StaticDirectory(invokers));
+                    invoker = Cluster.getCluster(cluster).join(new StaticDirectory(invokers));     // StaticDirectory合并为一个Invoker
                 }
             }
         }

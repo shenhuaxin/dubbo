@@ -46,6 +46,7 @@ public class ProviderConfig extends AbstractServiceConfig {
 
     /**
      * Context path
+     * <dubbo:protocol name="rest" port="8888" contextpath="services"/>
      */
     private String contextpath;
 

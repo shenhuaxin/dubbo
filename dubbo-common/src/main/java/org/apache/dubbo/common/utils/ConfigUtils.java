@@ -44,7 +44,7 @@ public class ConfigUtils {
     private static Pattern VARIABLE_PATTERN = Pattern.compile(
             "\\$\\s*\\{?\\s*([\\._0-9a-zA-Z]+)\\s*\\}?");
     private static volatile Properties PROPERTIES;
-    private static int PID = -1;
+    private static int PID = -1;         // 程序运行的PID, 就是jps的pid
 
     private ConfigUtils() {
     }

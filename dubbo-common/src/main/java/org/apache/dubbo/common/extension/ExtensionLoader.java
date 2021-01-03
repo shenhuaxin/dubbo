@@ -430,7 +430,7 @@ public class ExtensionLoader<T> {
             synchronized (holder) {
                 instance = holder.get();
                 if (instance == null) {
-                    instance = createExtension(name, wrap);
+                    instance = createExtension(name, wrap);    // 这里才是创建一个真正的扩展。
                     holder.set(instance);
                 }
             }
@@ -682,25 +682,27 @@ public class ExtensionLoader<T> {
 
         try {
             for (Method method : instance.getClass().getMethods()) {
-                if (!isSetter(method)) {
+                if (!isSetter(method)) {               // 获取这个类的所有set方法
                     continue;
                 }
                 /**
                  * Check {@link DisableInject} to see if we need auto injection for this property
                  */
-                if (method.getAnnotation(DisableInject.class) != null) {
+                if (method.getAnnotation(DisableInject.class) != null) {          // 方法上设置了DisableInject注解，不需要注入
                     continue;
                 }
                 Class<?> pt = method.getParameterTypes()[0];
-                if (ReflectUtils.isPrimitives(pt)) {
+                if (ReflectUtils.isPrimitives(pt)) {                      // 基础类型，无需注入
                     continue;
                 }
 
                 try {
-                    String property = getSetterProperty(method);
+                    String property = getSetterProperty(method);         // 获取注入的值。   如setProtocol, 那么就是protocol
+                    // 注入的这个值从哪里来呢？ 进入getExtension查看。  分为两种， 一种在Spi中继续获取， 一种在spring中获取。
+                    // 从SPI中获取的是Adaptive类，具体的根据之后使用的URL来确定。
                     Object object = objectFactory.getExtension(pt, property);
                     if (object != null) {
-                        method.invoke(instance, object);
+                        method.invoke(instance, object);                               // 注入。
                     }
                 } catch (Exception e) {
                     logger.error("Failed to inject via method " + method.getName()

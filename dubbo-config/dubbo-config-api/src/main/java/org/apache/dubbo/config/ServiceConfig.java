@@ -187,7 +187,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             bootstrap.initialize();
         }
 
-        checkAndUpdateSubConfigs();
+        checkAndUpdateSubConfigs();    // 检查并更新各项配置
 
         //init serviceMetadata
         serviceMetadata.setVersion(getVersion());
@@ -201,7 +201,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             return;
         }
 
-        if (shouldDelay()) {
+        if (shouldDelay()) {     // 延迟暴露
             DELAY_EXPORT_EXECUTOR.schedule(this::doExport, getDelay(), TimeUnit.MILLISECONDS);
         } else {
             doExport();
@@ -291,11 +291,11 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     }
 
 
-    protected synchronized void doExport() {
-        if (unexported) {
+    protected synchronized void doExport() {    // 加锁了， 一个服务只能发布一次
+        if (unexported) {            // 已经取消发布
             throw new IllegalStateException("The service " + interfaceClass.getName() + " has already unexported!");
         }
-        if (exported) {
+        if (exported) {             // 已经发布了
             return;
         }
         exported = true;
@@ -318,13 +318,15 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                 serviceMetadata
         );
 
-        List<URL> registryURLs = ConfigValidationUtils.loadRegistries(this, true);
+        // 一个服务可以有多种协议、多个注册中心
+        List<URL> registryURLs = ConfigValidationUtils.loadRegistries(this, true);       // 加载注册中心信息， 多个注册中心
 
-        for (ProtocolConfig protocolConfig : protocols) {
+        for (ProtocolConfig protocolConfig : protocols) {           // 多种不同的协议：Dubbo、Rmi、Hessian， 每种协议都要进行发布。
             String pathKey = URL.buildKey(getContextPath(protocolConfig)
                     .map(p -> p + "/" + path)
                     .orElse(path), group, version);
             // In case user specified path, register service one more time to map it to path.
+            // 如果用户指定了路径， 重新注册一次
             repository.registerService(pathKey, interfaceClass);
             // TODO, uncomment this line once service key is unified
             serviceMetadata.setServiceKey(pathKey);
@@ -334,14 +336,15 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
 
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs) {
         String name = protocolConfig.getName();
-        if (StringUtils.isEmpty(name)) {
+        if (StringUtils.isEmpty(name)) {       // 协议名称
             name = DUBBO;
         }
 
-        Map<String, String> map = new HashMap<String, String>();
-        map.put(SIDE_KEY, PROVIDER_SIDE);
+        Map<String, String> map = new HashMap<String, String>();          // 记录url的参数
+        map.put(SIDE_KEY, PROVIDER_SIDE);                    // 服务提供方
 
-        ServiceConfig.appendRuntimeParameters(map);
+        ServiceConfig.appendRuntimeParameters(map);          // 运行信息
+        // 下面会从各个Config获取参数，例如，application、interface参数等
         AbstractConfig.appendParameters(map, getMetrics());
         AbstractConfig.appendParameters(map, getApplication());
         AbstractConfig.appendParameters(map, getModule());
@@ -354,7 +357,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         if (metadataReportConfig != null && metadataReportConfig.isValid()) {
             map.putIfAbsent(METADATA_KEY, REMOTE_METADATA_STORAGE_TYPE);
         }
-        if (CollectionUtils.isNotEmpty(getMethods())) {
+        if (CollectionUtils.isNotEmpty(getMethods())) {        // 从MethodConfig中获取URL参数
             for (MethodConfig method : getMethods()) {
                 AbstractConfig.appendParameters(map, method, method.getName());
                 String retryKey = method.getName() + ".retry";
@@ -364,7 +367,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                         map.put(method.getName() + ".retries", "0");
                     }
                 }
-                List<ArgumentConfig> arguments = method.getArguments();
+                List<ArgumentConfig> arguments = method.getArguments();     // 从ArgumentConfig中获取URL参数
                 if (CollectionUtils.isNotEmpty(arguments)) {
                     for (ArgumentConfig argument : arguments) {
                         // convert argument type
@@ -410,7 +413,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             } // end of methods for
         }
 
-        if (ProtocolUtils.isGeneric(generic)) {
+        if (ProtocolUtils.isGeneric(generic)) {          // 根据generic是否为true，向map中添加不同的信息
             map.put(GENERIC_KEY, generic);
             map.put(METHODS_KEY, ANY_VALUE);
         } else {
@@ -424,6 +427,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                 logger.warn("No method found in service interface " + interfaceClass.getName());
                 map.put(METHODS_KEY, ANY_VALUE);
             } else {
+                // 添加method参数
                 map.put(METHODS_KEY, StringUtils.join(new HashSet<String>(Arrays.asList(methods)), ","));
             }
         }
@@ -431,6 +435,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         /**
          * Here the token value configured by the provider is used to assign the value to ServiceConfig#token
          */
+        // 添加token到map集合中，默认随机生成UUID
         if (ConfigUtils.isEmpty(token) && provider != null) {
             token = provider.getToken();
         }
@@ -443,14 +448,17 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             }
         }
         //init serviceMetadata attachments
+        // 将map数据放入serviceMetadata中
         serviceMetadata.getAttachments().putAll(map);
 
         // export service
         String host = findConfigedHosts(protocolConfig, registryURLs, map);
         Integer port = findConfigedPorts(protocolConfig, name, map);
+        // 根据上面获取的host、port以及前文获取的map集合组装URL
         URL url = new URL(name, host, port, getContextPath(protocolConfig).map(p -> p + "/" + path).orElse(path), map);
 
         // You can customize Configurator to append extra parameters
+        // 可以自定义Configurator添加额外的参数
         if (ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
                 .hasExtension(url.getProtocol())) {
             url = ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
@@ -458,23 +466,24 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         }
 
         String scope = url.getParameter(SCOPE_KEY);
-        // don't export when none is configured
-        if (!SCOPE_NONE.equalsIgnoreCase(scope)) {
+        // don't export when none is configured,           存在config = null 的情况， 所以这里用的是 ！=
+        if (!SCOPE_NONE.equalsIgnoreCase(scope)) {        // scope不为none，进行发布
 
-            // export to local if the config is not remote (export to remote only when config is remote)
-            if (!SCOPE_REMOTE.equalsIgnoreCase(scope)) {
+            // export to local if the config is not remote (export to remote only when config is remote)   (只有当config为remote时暴露到远程)
+            if (!SCOPE_REMOTE.equalsIgnoreCase(scope)) {          // scope不为remote发布到本地，为null时，既要暴露到远程，也要暴露到本地。
                 exportLocal(url);
             }
-            // export to remote if the config is not local (export to local only when config is local)
-            if (!SCOPE_LOCAL.equalsIgnoreCase(scope)) {
-                if (CollectionUtils.isNotEmpty(registryURLs)) {
+            // export to remote if the config is not local (export to local only when config is local)  (只有当config为local时发布到local)
+            if (!SCOPE_LOCAL.equalsIgnoreCase(scope)) {           // scope不为local，发布到远程
+                if (CollectionUtils.isNotEmpty(registryURLs)) {   // 注册中心地址不为空，getInvoker的第三个参数为registerUrl, 为空时，为url。
+                    // 也就是存在注册中心，将服务发布到注册中心上，不存在，不发布到注册中心上，Consumer只能直连Provider,
                     for (URL registryURL : registryURLs) {
                         //if protocol is only injvm ,not register
-                        if (LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {
+                        if (LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {   // // injvm协议只在exportLocal()中有用，不会将服务发布到注册中心, 所以这里忽略injvm协议
                             continue;
                         }
-                        url = url.addParameterIfAbsent(DYNAMIC_KEY, registryURL.getParameter(DYNAMIC_KEY));
-                        URL monitorUrl = ConfigValidationUtils.loadMonitor(this, registryURL);
+                        url = url.addParameterIfAbsent(DYNAMIC_KEY, registryURL.getParameter(DYNAMIC_KEY));       // 如果url中不存在，则取register中的属性
+                        URL monitorUrl = ConfigValidationUtils.loadMonitor(this, registryURL);                    //
                         if (monitorUrl != null) {
                             url = url.addParameterAndEncoded(MONITOR_KEY, monitorUrl.toFullString());
                         }
@@ -487,15 +496,17 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                         }
 
                         // For providers, this is used to enable custom proxy to generate invoker
+                        // 用于提供者， 这个用于开启自定义代理生成Invoker
                         String proxy = url.getParameter(PROXY_KEY);
                         if (StringUtils.isNotEmpty(proxy)) {
                             registryURL = registryURL.addParameter(PROXY_KEY, proxy);
                         }
 
+                        // 使用代理工厂生成ref代理类。
                         Invoker<?> invoker = PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(EXPORT_KEY, url.toFullString()));
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
-                        Exporter<?> exporter = PROTOCOL.export(wrapperInvoker);
+                        Exporter<?> exporter = PROTOCOL.export(wrapperInvoker);          // 这里的protocol为RegisterProtocol
                         exporters.add(exporter);
                     }
                 } else {
@@ -518,6 +529,8 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
     @SuppressWarnings({"unchecked", "rawtypes"})
     /**
      * always export injvm
+     * 本地调用使用了 injvm 协议，是一个伪协议，它不开启端口，不发起远程调用，只在 JVM 内直接关联，但执行 Dubbo 的 Filter 链。
+     * 从 2.2.0 开始，每个服务默认都会在本地暴露。在引用服务的时候，默认优先引用本地服务。如果希望引用远程服务可以使用一下配置强制引用远程服务。
      */
     private void exportLocal(URL url) {
         URL local = URLBuilder.from(url)

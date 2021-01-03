@@ -34,6 +34,8 @@ import static org.apache.dubbo.common.constants.CommonConstants.REFERENCE_INTERC
 
 public abstract class AbstractCluster implements Cluster {
 
+
+    // 构建Cluster拦截链
     private <T> Invoker<T> buildClusterInterceptors(AbstractClusterInvoker<T> clusterInvoker, String key) {
         AbstractClusterInvoker<T> last = clusterInvoker;
         List<ClusterInterceptor> interceptors = ExtensionLoader.getExtensionLoader(ClusterInterceptor.class).getActivateExtension(clusterInvoker.getUrl(), key);
@@ -42,7 +44,7 @@ public abstract class AbstractCluster implements Cluster {
             for (int i = interceptors.size() - 1; i >= 0; i--) {
                 final ClusterInterceptor interceptor = interceptors.get(i);
                 final AbstractClusterInvoker<T> next = last;
-                last = new InterceptorInvokerNode<>(clusterInvoker, interceptor, next);
+                last = new InterceptorInvokerNode<>(clusterInvoker, interceptor, next);   // 一个Invoker接着一个Invoker， 链表。
             }
         }
         return last;

@@ -56,6 +56,7 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
         int invokersHashCode = invokers.hashCode();
         ConsistentHashSelector<T> selector = (ConsistentHashSelector<T>) selectors.get(key);
         if (selector == null || selector.identityHashCode != invokersHashCode) {
+            // 每个调用的函数都有一个Invoker selector
             selectors.put(key, new ConsistentHashSelector<T>(invokers, methodName, invokersHashCode));         // 如果没有， 则设置一个selector
             selector = (ConsistentHashSelector<T>) selectors.get(key);                                         //
         }
@@ -76,26 +77,26 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
             this.virtualInvokers = new TreeMap<Long, Invoker<T>>();
             this.identityHashCode = identityHashCode;
             URL url = invokers.get(0).getUrl();             // 调用服务的URL。
-            this.replicaNumber = url.getMethodParameter(methodName, HASH_NODES, 160);    //
+            this.replicaNumber = url.getMethodParameter(methodName, HASH_NODES, 160);    // 默认为160个槽位，
             String[] index = COMMA_SPLIT_PATTERN.split(url.getMethodParameter(methodName, HASH_ARGUMENTS, "0"));
             argumentIndex = new int[index.length];
             for (int i = 0; i < index.length; i++) {
                 argumentIndex[i] = Integer.parseInt(index[i]);
             }
             for (Invoker<T> invoker : invokers) {
-                String address = invoker.getUrl().getAddress();
-                for (int i = 0; i < replicaNumber / 4; i++) {
+                String address = invoker.getUrl().getAddress();      // invoker的地址。
+                for (int i = 0; i < replicaNumber / 4; i++) {        // 同一个节点虚拟出160个节点。
                     byte[] digest = Bytes.getMD5(address + i);
                     for (int h = 0; h < 4; h++) {
                         long m = hash(digest, h);
-                        virtualInvokers.put(m, invoker);
+                        virtualInvokers.put(m, invoker);             // 哈希槽，防止数据倾斜
                     }
                 }
             }
         }
 
         public Invoker<T> select(Invocation invocation) {
-            String key = toKey(invocation.getArguments());
+            String key = toKey(invocation.getArguments());     // 相同参数的请求总发送到同一提供者。
             byte[] digest = Bytes.getMD5(key);
             return selectForKey(hash(digest, 0));
         }

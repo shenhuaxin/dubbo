@@ -116,12 +116,14 @@ import static org.apache.dubbo.remoting.Constants.CLIENT_KEY;
 
 /**
  * See {@link ApplicationModel} and {@link ExtensionLoader} for why this class is designed to be singleton.
+ * 为什么这个类设计为单例， 请看ApplicationModel和ExtensionLoader.
  * <p>
- * The bootstrap class of Dubbo
+ * The bootstrap class of Dubbo:   Dubbo的启动类
  * <p>
  * Get singleton instance by calling static method {@link #getInstance()}.
  * Designed as singleton because some classes inside Dubbo, such as ExtensionLoader, are designed only for one instance per process.
- *
+ * 使用静态方法getInstance() 获取单实例Bean.
+ * 设计为单实例是因为，在Dubbo中的一些类， 例如， ExtensionLoader被设计为一个进程只有一个实例。
  * @since 2.7.5
  */
 public class DubboBootstrap extends GenericEventListener {
@@ -164,7 +166,7 @@ public class DubboBootstrap extends GenericEventListener {
 
     private ReferenceConfigCache cache;
 
-    private volatile boolean exportAsync;
+    private volatile boolean exportAsync;      // 是否为异步发布
 
     private volatile boolean referAsync;
 
@@ -192,7 +194,7 @@ public class DubboBootstrap extends GenericEventListener {
      * See {@link ApplicationModel} and {@link ExtensionLoader} for why DubboBootstrap is designed to be singleton.
      */
     public static DubboBootstrap getInstance() {
-        if (instance == null) {
+        if (instance == null) {         // 双重检查锁。
             synchronized (DubboBootstrap.class) {
                 if (instance == null) {
                     instance = new DubboBootstrap();
@@ -526,11 +528,11 @@ public class DubboBootstrap extends GenericEventListener {
 
         ApplicationModel.initFrameworkExts();
 
-        startConfigCenter();
+        startConfigCenter();   // 配置中心
 
-        loadRemoteConfigs();
+        loadRemoteConfigs();   // 远程配置
 
-        checkGlobalConfigs();
+        checkGlobalConfigs();  //
 
         // @since 2.7.8
         startMetadataCenter();
@@ -886,25 +888,25 @@ public class DubboBootstrap extends GenericEventListener {
      * Start the bootstrap
      */
     public DubboBootstrap start() {
-        if (started.compareAndSet(false, true)) {
-            ready.set(false);
-            initialize();
+        if (started.compareAndSet(false, true)) {        // cas保证只启动一次
+            ready.set(false);              // 用于判断当前节点是否已经启动完毕，在后面的Dubbo QoS中会使用到该字段
+            initialize();                  //初始化一些基础组件，例如，配置中心相关组件、事件监听、元数据相关组件。
             if (logger.isInfoEnabled()) {
                 logger.info(NAME + " is starting...");
             }
-            // 1. export Dubbo Services
+            // 1. export Dubbo Services       发布服务
             exportServices();
 
-            // Not only provider register
+            // Not only provider register   不仅是提供者注册器
             if (!isOnlyRegisterProvider() || hasExportedServices()) {
-                // 2. export MetadataService
+                // 2. export MetadataService  暴露元数据服务。
                 exportMetadataService();
-                //3. Register the local ServiceInstance if required
+                //3. Register the local ServiceInstance if required  注册本地服务实例。
                 registerServiceInstance();
             }
 
-            referServices();
-            if (asyncExportingFutures.size() > 0) {
+            referServices();           // 引用服务
+            if (asyncExportingFutures.size() > 0) {          // 异步发布服务是否已经完成，没有就开启一个线程，异步执行，执行完了就将ready设置为true
                 new Thread(() -> {
                     try {
                         this.awaitFinish();
@@ -1074,12 +1076,12 @@ public class DubboBootstrap extends GenericEventListener {
     }
 
     private void exportServices() {
-        configManager.getServices().forEach(sc -> {
+        configManager.getServices().forEach(sc -> {             // 遍历ServiceConfig
             // TODO, compatible with ServiceConfig.export()
             ServiceConfig serviceConfig = (ServiceConfig) sc;
             serviceConfig.setBootstrap(this);
 
-            if (exportAsync) {
+            if (exportAsync) {               // 如果是异步发布，获取一个线程池异步进行发布。
                 ExecutorService executor = executorRepository.getServiceExporterExecutor();
                 Future<?> future = executor.submit(() -> {
                     sc.export();
