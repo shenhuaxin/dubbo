@@ -49,7 +49,7 @@ import static org.apache.dubbo.config.Constants.TEST_ENVIRONMENT;
 
 /**
  * The application info
- *
+ * <dubbo:application />
  * @export
  */
 public class ApplicationConfig extends AbstractConfig {
