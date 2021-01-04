@@ -320,7 +320,6 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
     @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
     private T createProxy(Map<String, String> map) {
-        // TODO 阅读到这里了，
         if (shouldJvmRefer(map)) {
             URL url = new URL(LOCAL_PROTOCOL, LOCALHOST_VALUE, 0, interfaceClass.getName()).addParameters(map);
             invoker = REF_PROTOCOL.refer(interfaceClass, url);          // 使用InjvmProtocol引用服务。
@@ -378,10 +377,12 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                 }
                 if (registryURL != null) { // registry url is available      存在注册中心
                     // for multi-subscription scenario, use 'zone-aware' policy by default
+                    // 对于多订阅方案，默认使用 zone-aware 策略
                     String cluster = registryURL.getParameter(CLUSTER_KEY, ZoneAwareCluster.NAME);
                     // The invoker wrap sequence would be: ZoneAwareClusterInvoker(StaticDirectory) -> FailoverClusterInvoker(RegistryDirectory, routing happens here) -> Invoker
                     // 这个invoker包装顺序为： ZoneAwareClusterInvoker(StaticDirectory)   —>  FailoverClusterInvoker(RegistryDirectory, 路由发生在这里)  -> Invoker
-                    invoker = Cluster.getCluster(cluster, false).join(new StaticDirectory(registryURL, invokers));
+                    // 我的理解： 存在多注册中心（多直连地址），注册中心的地址是已知的，故使用StaticDirectory， 每个注册中心的提供的提供者的地址是未知的，需要注册中心去感知，故使用RegistryDirectory。
+                    invoker = Cluster.getCluster(cluster, false).join(new StaticDirectory(registryURL, invokers));          //  ZoneAwareClusterInvoker(StaticDirectory) 包装
                 } else { // not a registry url, must be direct invoke.      不存在注册中心，肯定是直连调用。
                     String cluster = CollectionUtils.isNotEmpty(invokers)
                             ? (invokers.get(0).getUrl() != null ? invokers.get(0).getUrl().getParameter(CLUSTER_KEY, ZoneAwareCluster.NAME) : Cluster.DEFAULT)
