@@ -69,7 +69,7 @@ public abstract class AbstractServer extends AbstractEndpoint implements Remotin
         this.accepts = url.getParameter(ACCEPTS_KEY, DEFAULT_ACCEPTS);   //默认无限制
         this.idleTimeout = url.getParameter(IDLE_TIMEOUT_KEY, DEFAULT_IDLE_TIMEOUT);
         try {
-            doOpen();
+            doOpen();                               // 开启服务端进行监听。
             if (logger.isInfoEnabled()) {
                 logger.info("Start " + getClass().getSimpleName() + " bind " + getBindAddress() + ", export " + getLocalAddress());
             }

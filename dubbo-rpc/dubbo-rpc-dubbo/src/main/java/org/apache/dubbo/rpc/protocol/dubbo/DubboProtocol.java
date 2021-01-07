@@ -315,7 +315,7 @@ public class DubboProtocol extends AbstractProtocol {
         //client can export a service which's only for server to invoke
         boolean isServer = url.getParameter(IS_SERVER_KEY, true);
         if (isServer) {                                 // 如果是Server端，才启动Server对象
-            ProtocolServer server = serverMap.get(key);   // 没有监听这个地址，则监听这个地址。 双重检查锁，防止开启两个server
+            ProtocolServer server = serverMap.get(key);   // 没有监听这个地址，则监听这个地址。 双重检查锁，防止开启两个server, 一个地址只开启一个Server
             if (server == null) {
                 synchronized (this) {
                     server = serverMap.get(key);
