@@ -480,7 +480,7 @@ public class RegistryProtocol implements Protocol {
             registry.register(directory.getRegisteredConsumerUrl());
         }
         directory.buildRouterChain(urlToRegistry);
-        directory.subscribe(toSubscribeUrl(urlToRegistry));
+        directory.subscribe(toSubscribeUrl(urlToRegistry));            // 订阅注册中心， 如果后续提供者发生变化，通知消费者。
 
         return (ClusterInvoker<T>) cluster.join(directory);
     }
