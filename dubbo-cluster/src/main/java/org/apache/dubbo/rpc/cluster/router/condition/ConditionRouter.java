@@ -51,7 +51,7 @@ import static org.apache.dubbo.rpc.cluster.Constants.RUNTIME_KEY;
 /**
  * ConditionRouter
  * 条件路由规则
- * 更多规则见： http://dubbo.apache.org/zh/docs/v2.7/user/examples/routing-rule-deprecated/#%E6%9D%A1%E4%BB%B6%E8%B7%AF%E7%94%B1%E8%A7%84%E5%88%99
+ * 更多规则见： http://dubbo.apache.org/zh/docs/v2.7/user/examples/routing-rule/
  */
 public class ConditionRouter extends AbstractRouter {
     public static final String NAME = "condition";
